@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="theme-color" content="#ffffff" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<title>Exquisite Corpse</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script>
+const { useState, useRef, useCallback, useEffect, createElement: h } = React;
+
+const CANVAS_W = 600;
+const CANVAS_H = 420;
+const GUIDE_H = 25;
+const COLORS = [”#1a1a1a”,”#e74c3c”,”#e67e22”,”#f1c40f”,”#27ae60”,”#2980b9”,”#8e44ad”,”#795548”,”#e91e8f”,”#FFFFFF”];
+const SIZES = [3, 8, 18];
+const FONT = “‘Space Mono’, monospace”;
+
+function wobbleCircle(cx, cy, r, seed) {
+var pts = 12, d = “”;
+for (var i = 0; i <= pts; i++) {
+var a = (i / pts) * Math.PI * 2;
+var rr = r + Math.sin(seed * 2.3 + i * 3.1) * 1.5;
+d += (i === 0 ? “M “ : “ L “) + (cx + Math.cos(a) * rr).toFixed(1) + “,” + (cy + Math.sin(a) * rr).toFixed(1);
+}
+return d + “ Z”;
+}
+
+function SketchBtn(props) {
+var children = props.children, onClick = props.onClick, w = props.w || 200, ht = props.h || 54;
+var fontSize = props.fontSize || 22, disabled = props.disabled, style = props.style || {};
+var ref = useState(false), pressed = ref[0], setPressed = ref[1];
+var handleClick = useCallback(function (e) {
+if (disabled) return;
+setPressed(true);
+setTimeout(function () { setPressed(false); }, 30);
+if (onClick) onClick(e);
+}, [disabled, onClick]);
+return h(“div”, {
+onClick: handleClick,
+style: Object.assign({
+width: w === “auto” ? “auto” : w, height: ht, cursor: disabled ? “default” : “pointer”,
+opacity: disabled ? 0.4 : 1, display: “flex”, alignItems: “center”, justifyContent: “center”,
+border: “2px solid #1a1a1a”, background: pressed ? “#1a1a1a” : “#fff”,
+color: pressed ? “#fff” : “#1a1a1a”, fontFamily: FONT, fontSize: fontSize,
+userSelect: “none”, boxSizing: “border-box”, whiteSpace: “nowrap”, padding: “0 16px”
+}, style)
+}, children);
+}
+
+function Title(props) {
+return h(“div”, { style: { fontFamily: FONT, fontSize: props.size || 44, color: “#1a1a1a”, textAlign: “center”, lineHeight: 1.1 } }, props.children);
+}
+
+function drawStroke(ctx, s) {
+if (s.points.length < 2) return;
+ctx.beginPath();
+ctx.strokeStyle = s.eraser ? “#FFFFFF” : s.color;
+ctx.lineWidth = s.size;
+ctx.lineCap = “round”;
+ctx.lineJoin = “round”;
+ctx.moveTo(s.points[0].x, s.points[0].y);
+for (var i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
+ctx.stroke();
+}
+
+function redrawAll(ctx, strokes) {
+ctx.fillStyle = “#FFFFFF”;
+ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+strokes.forEach(function (s) { drawStroke(ctx, s); });
+}
+
+function App() {
+var _screen = useState(“landing”), screen = _screen[0], setScreen = _screen[1];
+var _turn = useState(0), turn = _turn[0], setTurn = _turn[1];
+var _sections = useState([null, null, null]), sections = _sections[0], setSections = _sections[1];
+var _composite = useState(null), compositeUrl = _composite[0], setCompositeUrl = _composite[1];
+var _confirmDone = useState(false), confirmDone = _confirmDone[0], setConfirmDone = _confirmDone[1];
+var _saveLabel = useState(“Save to Photos”), saveLabel = _saveLabel[0], setSaveLabel = _saveLabel[1];
+
+var canvasRef = useRef(null);
+var compositeCanvasRef = useRef(null);
+var _strokes = useState([]), strokes = _strokes[0], setStrokes = _strokes[1];
+var _curStroke = useState(null), currentStroke = _curStroke[0], setCurrentStroke = _curStroke[1];
+var _color = useState(COLORS[0]), color = _color[0], setColor = _color[1];
+var _size = useState(SIZES[1]), size = _size[0], setSize = _size[1];
+var _erasing = useState(false), erasing = _erasing[0], setErasing = _erasing[1];
+var drawing = useRef(false);
+
+var getPos = useCallback(function (e) {
+var rect = canvasRef.current.getBoundingClientRect();
+var sx = CANVAS_W / rect.width, sy = CANVAS_H / rect.height;
+var cx = e.clientX != null ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+var cy = e.clientY != null ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
+}, []);
+
+var onDown = useCallback(function (e) {
+e.preventDefault();
+drawing.current = true;
+setCurrentStroke({ points: [getPos(e)], color: color, size: size, eraser: erasing });
+}, [getPos, color, size, erasing]);
+
+var onMove = useCallback(function (e) {
+e.preventDefault();
+if (!drawing.current || !currentStroke) return;
+var p = getPos(e);
+var ns = { points: currentStroke.points.concat([p]), color: currentStroke.color, size: currentStroke.size, eraser: currentStroke.eraser };
+setCurrentStroke(ns);
+var ctx = canvasRef.current && canvasRef.current.getContext(“2d”);
+if (ctx && ns.points.length >= 2) {
+ctx.beginPath();
+ctx.strokeStyle = ns.eraser ? “#FFFFFF” : ns.color;
+ctx.lineWidth = ns.size;
+ctx.lineCap = “round”;
+ctx.lineJoin = “round”;
+var pts = ns.points;
+ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
+ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+ctx.stroke();
+}
+}, [getPos, currentStroke]);
+
+var onUp = useCallback(function (e) {
+e.preventDefault();
+if (!drawing.current) return;
+drawing.current = false;
+if (currentStroke && currentStroke.points.length >= 2) setStrokes(function (p) { return p.concat([currentStroke]); });
+setCurrentStroke(null);
+}, [currentStroke]);
+
+var undo = useCallback(function () {
+setStrokes(function (prev) {
+var next = prev.slice(0, -1);
+var ctx = canvasRef.current && canvasRef.current.getContext(“2d”);
+if (ctx) redrawAll(ctx, next);
+return next;
+});
+}, []);
+
+var initCanvas = useCallback(function () {
+var ctx = canvasRef.current && canvasRef.current.getContext(“2d”);
+if (!ctx) return;
+ctx.fillStyle = “#FFFFFF”;
+ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+setStrokes([]);
+setCurrentStroke(null);
+setConfirmDone(false);
+setErasing(false);
+setColor(COLORS[0]);
+setSize(SIZES[1]);
+}, []);
+
+var captureSection = useCallback(function () {
+var url = canvasRef.current.toDataURL(“image/png”);
+setSections(function (prev) { var n = prev.slice(); n[turn] = url; return n; });
+}, [turn]);
+
+var handleDone = useCallback(function () {
+if (!confirmDone) { setConfirmDone(true); return; }
+captureSection();
+if (turn < 2) { setTurn(turn + 1); setScreen(“transition”); }
+else setScreen(“reveal”);
+setConfirmDone(false);
+}, [confirmDone, captureSection, turn]);
+
+var buildComposite = useCallback(function () {
+return new Promise(function (resolve) {
+var c = document.createElement(“canvas”);
+c.width = CANVAS_W;
+c.height = CANVAS_H * 3;
+var ctx = c.getContext(“2d”);
+ctx.fillStyle = “#FFFFFF”;
+ctx.fillRect(0, 0, c.width, c.height);
+var loaded = 0;
+sections.forEach(function (src, i) {
+if (!src) { loaded++; if (loaded === 3) resolve(c); return; }
+var img = new Image();
+img.onload = function () { ctx.drawImage(img, 0, i * CANVAS_H); loaded++; if (loaded === 3) resolve(c); };
+img.src = src;
+});
+});
+}, [sections]);
+
+useEffect(function () {
+if (screen === “reveal”) {
+buildComposite().then(function (c) {
+compositeCanvasRef.current = c;
+setCompositeUrl(c.toDataURL(“image/png”));
+setSaveLabel(“Save to Photos”);
+});
+}
+}, [screen, buildComposite]);
+
+var saveToPhotos = useCallback(function () {
+var c = compositeCanvasRef.current;
+if (!c) return;
+setSaveLabel(“Saving…”);
+c.toBlob(function (blob) {
+if (!blob) { setSaveLabel(“Save to Photos”); return; }
+var file = new File([blob], “exquisite-corpse.png”, { type: “image/png” });
+if (typeof navigator.share === “function” && typeof navigator.canShare === “function” && navigator.canShare({ files: [file] })) {
+navigator.share({ files: [file], title: “Exquisite Corpse” }).then(function () {
+setSaveLabel(“Saved!”);
+setTimeout(function () { setSaveLabel(“Save to Photos”); }, 1500);
+}).catch(function (err) {
+if (err.name === “AbortError”) { setSaveLabel(“Save to Photos”); return; }
+fallbackDownload(blob);
+});
+} else {
+fallbackDownload(blob);
+}
+}, “image/png”);
+}, []);
+
+function fallbackDownload(blob) {
+var url = URL.createObjectURL(blob);
+var a = document.createElement(“a”);
+a.href = url;
+a.download = “exquisite-corpse-” + Date.now() + “.png”;
+a.style.display = “none”;
+document.body.appendChild(a);
+a.click();
+setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+setSaveLabel(“Downloaded!”);
+setTimeout(function () { setSaveLabel(“Save to Photos”); }, 1500);
+}
+
+var startNewGame = useCallback(function () {
+setTurn(0);
+setSections([null, null, null]);
+setCompositeUrl(null);
+setSaveLabel(“Save to Photos”);
+setScreen(“drawing”);
+setTimeout(initCanvas, 50);
+}, [initCanvas]);
+
+var continueToDrawing = useCallback(function () {
+setScreen(“drawing”);
+setTimeout(initCanvas, 50);
+}, [initCanvas]);
+
+var _guideReady = useState(null), guideReady = _guideReady[0], setGuideReady = _guideReady[1];
+useEffect(function () {
+if (screen !== “drawing” || turn === 0) { setGuideReady(null); return; }
+var src = sections[turn - 1];
+if (!src) { setGuideReady(null); return; }
+var img = new Image();
+img.onload = function () {
+var c = document.createElement(“canvas”);
+c.width = CANVAS_W; c.height = GUIDE_H;
+var ctx = c.getContext(“2d”);
+ctx.drawImage(img, 0, CANVAS_H - GUIDE_H, CANVAS_W, GUIDE_H, 0, 0, CANVAS_W, GUIDE_H);
+setGuideReady(c.toDataURL());
+};
+img.src = src;
+}, [screen, turn, sections]);
+
+var wrap = { width: “100%”, maxWidth: 440, margin: “0 auto”, padding: “0 16px”, boxSizing: “border-box” };
+
+// LANDING
+if (screen === “landing”) {
+return h(“div”, { style: Object.assign({}, wrap, { minHeight: “100vh”, background: “#fff”, display: “flex”, flexDirection: “column”, alignItems: “center”, justifyContent: “center”, gap: 12 }) },
+h(“svg”, { width: 200, height: 60, viewBox: “0 0 200 60”, style: { marginBottom: 8 } },
+h(“path”, { d: “M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30”, fill: “none”, stroke: “#1a1a1a”, strokeWidth: 3, strokeLinecap: “round” })
+),
+h(Title, { size: 48 }, “Exquisite”, h(“br”), “Corpse”),
+h(“p”, { style: { fontFamily: FONT, fontSize: 17, color: “#888”, textAlign: “center”, margin: “4px 0 20px”, lineHeight: 1.3 } },
+“Draw a head. Pass it on.”, h(“br”), “Draw a body. Pass it on.”, h(“br”), “Draw the legs. Reveal!”
+),
+h(SketchBtn, { w: 200, h: 56, onClick: startNewGame }, “Play”)
+);
+}
+
+// TRANSITION
+if (screen === “transition”) {
+var labels = [“the head”, “the body”, “the legs”];
+return h(“div”, { style: Object.assign({}, wrap, { minHeight: “100vh”, background: “#fff”, display: “flex”, flexDirection: “column”, alignItems: “center”, justifyContent: “center”, gap: 20 }) },
+h(“svg”, { width: 60, height: 60, viewBox: “0 0 60 60” },
+h(“path”, { d: wobbleCircle(30, 30, 24, turn * 3), fill: “none”, stroke: “#1a1a1a”, strokeWidth: 2.5 }),
+h(“path”, { d: “M 22,28 L 30,20 L 38,28”, fill: “none”, stroke: “#1a1a1a”, strokeWidth: 2.5, strokeLinecap: “round” }),
+h(“path”, { d: “M 30,20 L 30,42”, fill: “none”, stroke: “#1a1a1a”, strokeWidth: 2.5, strokeLinecap: “round” })
+),
+h(Title, { size: 36 }, “Pass the device!”),
+h(“p”, { style: { fontFamily: FONT, fontSize: 19, color: “#888”, textAlign: “center” } }, “Next player draws “ + labels[turn]),
+h(SketchBtn, { w: 180, h: 52, onClick: continueToDrawing }, “Ready”)
+);
+}
+
+// REVEAL
+if (screen === “reveal”) {
+return h(“div”, { style: Object.assign({}, wrap, { height: “100vh”, background: “#fff”, display: “flex”, flexDirection: “column”, alignItems: “center”, paddingTop: 16, paddingBottom: 16, overflow: “hidden” }) },
+h(Title, { size: 34 }, “Behold!”),
+compositeUrl && h(“img”, { src: compositeUrl, alt: “Exquisite Corpse drawing”, style: { flex: 1, minHeight: 0, maxWidth: 200, objectFit: “contain”, marginTop: 10, border: “2px solid #1a1a1a”, borderRadius: 4 } }),
+h(“div”, { style: { display: “flex”, gap: 10, marginTop: 14, justifyContent: “center”, flexShrink: 0 } },
+h(SketchBtn, { w: “auto”, h: 42, fontSize: 14, onClick: saveToPhotos }, saveLabel),
+h(SketchBtn, { w: “auto”, h: 42, fontSize: 14, onClick: function () { setScreen(“landing”); } }, “Home”)
+)
+);
+}
+
+// DRAWING
+var turnLabels = [“Draw the head”, “Draw the body”, “Draw the legs”];
+
+return h(“div”, { style: { width: “100%”, height: “100vh”, background: “#fff”, display: “flex”, flexDirection: “column”, overflow: “hidden”, boxSizing: “border-box” } },
+h(“div”, { style: { textAlign: “center”, padding: “10px 0 6px”, flexShrink: 0 } },
+h(“span”, { style: { fontFamily: FONT, fontSize: 20, color: “#1a1a1a” } }, turnLabels[turn]),
+h(“span”, { style: { fontFamily: FONT, fontSize: 15, color: “#aaa”, marginLeft: 10 } }, (turn + 1) + “/3”)
+),
+turn > 0 && guideReady && h(“div”, { style: { width: “100%”, display: “flex”, justifyContent: “center”, flexShrink: 0 } },
+h(“div”, { style: { width: “100%”, maxWidth: 440, padding: “0 12px”, boxSizing: “border-box” } },
+h(“img”, { src: guideReady, alt: “”, style: { width: “100%”, display: “block”, borderTop: “2px solid #1a1a1a”, borderLeft: “2px solid #1a1a1a”, borderRight: “2px solid #1a1a1a”, borderRadius: “4px 4px 0 0”, opacity: 0.4 } })
+)
+),
+h(“div”, { style: { flex: 1, display: “flex”, justifyContent: “center”, alignItems: “flex-start”, padding: “0 12px”, minHeight: 0 } },
+h(“canvas”, {
+ref: canvasRef, width: CANVAS_W, height: CANVAS_H,
+onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerLeave: onUp,
+style: { width: “100%”, maxWidth: 440, height: “auto”, border: “2px solid #1a1a1a”, borderRadius: turn > 0 && guideReady ? “0 0 4px 4px” : 4, touchAction: “none”, cursor: “crosshair” }
+})
+),
+h(“div”, { style: { flexShrink: 0, padding: “8px 8px 6px”, display: “flex”, flexDirection: “column”, gap: 8, alignItems: “center” } },
+h(“div”, { style: { display: “flex”, gap: 6, flexWrap: “wrap”, justifyContent: “center” } },
+COLORS.map(function (c) {
+var isWhite = c === “#FFFFFF”;
+var isSelected = isWhite ? erasing : (!erasing && color === c);
+return h(“div”, {
+key: c,
+onClick: function () { if (isWhite) { setErasing(true); } else { setColor(c); setErasing(false); } },
+style: { width: 30, height: 30, borderRadius: “50%”, background: c, border: isSelected ? “3px solid #1a1a1a” : isWhite ? “2px solid #ccc” : “3px solid transparent”, cursor: “pointer”, boxSizing: “border-box” }
+});
+})
+),
+h(“div”, { style: { display: “flex”, alignItems: “center”, gap: 8 } },
+SIZES.map(function (s) {
+return h(“div”, {
+key: s,
+onClick: function () { setSize(s); },
+style: { width: 38, height: 38, display: “flex”, alignItems: “center”, justifyContent: “center”, border: (size === s && !erasing ? 2.5 : 1.5) + “px solid “ + (size === s && !erasing ? “#1a1a1a” : “#ddd”), cursor: “pointer”, boxSizing: “border-box” }
+}, h(“div”, { style: { width: s / 1.1 + 2, height: s / 1.1 + 2, borderRadius: “50%”, background: “#1a1a1a” } }));
+}),
+h(“div”, { style: { width: 1, height: 30, background: “#ddd”, margin: “0 4px” } }),
+h(SketchBtn, { w: 60, h: 38, fontSize: 15, onClick: undo }, “Undo”),
+h(SketchBtn, { w: 80, h: 38, fontSize: 15, onClick: handleDone }, confirmDone ? “Sure?” : “Done”)
+)
+)
+);
+}
+
+ReactDOM.createRoot(document.getElementById(“root”)).render(React.createElement(App));
+</script>
+
+</body>
+</html>
