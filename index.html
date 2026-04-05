@@ -88,14 +88,6 @@ if (guideImg) {
 ctx.globalAlpha = 0.35;
 ctx.drawImage(guideImg, 0, 0);
 ctx.globalAlpha = 1.0;
-ctx.setLineDash([6, 4]);
-ctx.strokeStyle = "#1a1a1a";
-ctx.lineWidth = 1;
-ctx.beginPath();
-ctx.moveTo(0, GUIDE_H);
-ctx.lineTo(CANVAS_W, GUIDE_H);
-ctx.stroke();
-ctx.setLineDash([]);
 }
 strokes.forEach(function (s) { drawStroke(ctx, s); });
 }
@@ -188,14 +180,6 @@ guideImageRef.current = gc;
 ctx.globalAlpha = 0.35;
 ctx.drawImage(gc, 0, 0);
 ctx.globalAlpha = 1.0;
-ctx.setLineDash([6, 4]);
-ctx.strokeStyle = "#1a1a1a";
-ctx.lineWidth = 1;
-ctx.beginPath();
-ctx.moveTo(0, GUIDE_H);
-ctx.lineTo(CANVAS_W, GUIDE_H);
-ctx.stroke();
-ctx.setLineDash([]);
 };
 img.src = sections[turn - 1];
 } else {
