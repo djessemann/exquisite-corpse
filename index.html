@@ -275,11 +275,11 @@ var wrap = { width: "100%", maxWidth: 440, margin: "0 auto", padding: "0 16px", 
 
 // LANDING
 if (screen === "landing") {
-return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }) },
-h("svg", { width: 200, height: 60, viewBox: "0 0 200 60", style: { marginBottom: 8 } },
+return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 32 }) },
+h(Title, { size: 48 }, "exquisite", h("br"), "corpse"),
+h("svg", { width: 200, height: 60, viewBox: "0 0 200 60" },
 h("path", { d: "M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
-h(Title, { size: 48 }, "exquisite", h("br"), "corpse"),
 h(SketchBtn, { w: 200, h: 56, onClick: startNewGame }, "play")
 );
 }
