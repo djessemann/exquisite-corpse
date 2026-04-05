@@ -194,9 +194,12 @@ setSize(SIZES[1]);
 }, [initCount]);
 
 var captureSection = useCallback(function () {
+var ctx = canvasRef.current.getContext("2d");
+redrawAll(ctx, strokes, null);
 var url = canvasRef.current.toDataURL("image/png");
+redrawAll(ctx, strokes, guideImageRef.current);
 setSections(function (prev) { var n = prev.slice(); n[turn] = url; return n; });
-}, [turn]);
+}, [turn, strokes]);
 
 var handleDone = useCallback(function () {
 if (!confirmDone) { setConfirmDone(true); return; }
