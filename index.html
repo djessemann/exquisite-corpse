@@ -276,6 +276,9 @@ var wrap = { width: "100%", maxWidth: 440, margin: "0 auto", padding: "0 16px", 
 // LANDING
 if (screen === "landing") {
 return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 32 }) },
+h("svg", { width: 200, height: 60, viewBox: "0 0 200 60" },
+h("path", { d: "M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
+),
 h(Title, { size: 48 }, "exquisite", h("br"), "corpse"),
 h("svg", { width: 200, height: 60, viewBox: "0 0 200 60" },
 h("path", { d: "M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
@@ -300,7 +303,7 @@ h(SketchBtn, { w: 180, h: 52, onClick: continueToDrawing }, "ready")
 // REVEAL
 if (screen === "reveal") {
 return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16, overflow: "auto" }) },
-h(Title, { size: 34 }, "behold"),
+h(Title, { size: 34 }, "behold!"),
 compositeUrl && h("img", { src: compositeUrl, alt: "Exquisite Corpse drawing", style: { maxWidth: 200, width: "100%", height: "auto", marginTop: 10, border: "2px solid #1a1a1a", borderRadius: 4 } }),
 h("div", { style: { display: "flex", gap: 10, marginTop: 14, justifyContent: "center", flexShrink: 0 } },
 h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: saveToPhotos }, saveLabel),
@@ -351,7 +354,7 @@ style: { width: 48, height: 48, display: "flex", alignItems: "center", justifyCo
 ),
 h("div", { style: { display: "flex", gap: 12, width: "100%" } },
 h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: undo, style: { flex: 1 } }, "undo"),
-h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: handleDone, style: { flex: 1 } }, confirmDone ? "sure" : "done")
+h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: handleDone, style: { flex: 1 } }, confirmDone ? "sure?" : "done")
 )
 )
 );
