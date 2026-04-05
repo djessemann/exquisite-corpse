@@ -26,6 +26,17 @@ body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color
 <script>
 const { useState, useRef, useCallback, useEffect, createElement: h } = React;
 
+function useIsLarge() {
+var _s = useState(function () { return window.innerWidth >= 768; });
+var isLarge = _s[0], setIsLarge = _s[1];
+useEffect(function () {
+function check() { setIsLarge(window.innerWidth >= 768); }
+window.addEventListener("resize", check);
+return function () { window.removeEventListener("resize", check); };
+}, []);
+return isLarge;
+}
+
 const CANVAS_W = 600;
 const CANVAS_H = 420;
 const GUIDE_H = 25;
@@ -91,6 +102,7 @@ strokes.forEach(function (s) { drawStroke(ctx, s); });
 }
 
 function App() {
+var lg = useIsLarge();
 var _screen = useState("landing"), screen = _screen[0], setScreen = _screen[1];
 var _turn = useState(0), turn = _turn[0], setTurn = _turn[1];
 var _sections = useState([null, null, null]), sections = _sections[0], setSections = _sections[1];
@@ -287,43 +299,43 @@ setInitCount(function (c) { return c + 1; });
 }, []);
 
 
-var wrap = { width: "100%", maxWidth: 440, margin: "0 auto", padding: "0 16px", boxSizing: "border-box" };
+var wrap = { width: "100%", maxWidth: lg ? 680 : 440, margin: "0 auto", padding: lg ? "0 24px" : "0 16px", boxSizing: "border-box" };
 
 // LANDING
 if (screen === "landing") {
-return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 32 }) },
-h("svg", { width: 200, height: 60, viewBox: "0 0 200 60" },
+return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: lg ? 44 : 32 }) },
+h("svg", { width: lg ? 300 : 200, height: lg ? 80 : 60, viewBox: "0 0 200 60" },
 h("path", { d: "M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
-h(Title, { size: 48 }, "exquisite", h("br"), "corpse"),
-h("svg", { width: 200, height: 60, viewBox: "0 0 200 60" },
+h(Title, { size: lg ? 68 : 48 }, "exquisite", h("br"), "corpse"),
+h("svg", { width: lg ? 300 : 200, height: lg ? 80 : 60, viewBox: "0 0 200 60" },
 h("path", { d: "M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
-h(SketchBtn, { w: 200, h: 56, onClick: startNewGame }, "play")
+h(SketchBtn, { w: lg ? 260 : 200, h: lg ? 66 : 56, fontSize: lg ? 28 : 22, onClick: startNewGame }, "play")
 );
 }
 
 // TRANSITION
 if (screen === "transition") {
 var labels = ["the head", "the body", "the legs"];
-return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }) },
-h("svg", { width: 60, height: 200, viewBox: "0 0 60 200", style: { marginBottom: -4 } },
+return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: lg ? 28 : 20 }) },
+h("svg", { width: lg ? 80 : 60, height: lg ? 280 : 200, viewBox: "0 0 60 200", style: { marginBottom: -4 } },
 h("path", { d: "M 30,8 C 5,18 55,28 20,42 C -15,56 65,62 30,80 C -5,98 60,104 25,122 C -5,136 58,148 32,162 C 14,172 48,180 30,192", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
-h(Title, { size: 36 }, "pass the device"),
-h("p", { style: { fontFamily: FONT, fontSize: 19, color: "#888", textAlign: "center" } }, "next player draws " + labels[turn]),
-h(SketchBtn, { w: 180, h: 52, onClick: continueToDrawing }, "ready")
+h(Title, { size: lg ? 48 : 36 }, "pass the device"),
+h("p", { style: { fontFamily: FONT, fontSize: lg ? 24 : 19, color: "#888", textAlign: "center" } }, "next player draws " + labels[turn]),
+h(SketchBtn, { w: lg ? 240 : 180, h: lg ? 62 : 52, fontSize: lg ? 24 : 22, onClick: continueToDrawing }, "ready")
 );
 }
 
 // REVEAL
 if (screen === "reveal") {
 return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16, overflow: "auto" }) },
-h(Title, { size: 34 }, "behold!"),
-compositeUrl && h("img", { src: compositeUrl, alt: "Exquisite Corpse drawing", style: { maxWidth: 200, width: "100%", height: "auto", marginTop: 10, border: "2px solid #1a1a1a", borderRadius: 4 } }),
-h("div", { style: { display: "flex", gap: 10, marginTop: 14, justifyContent: "center", flexShrink: 0 } },
-h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: saveToPhotos }, saveLabel),
-h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: function () { setScreen("landing"); } }, "home")
+h(Title, { size: lg ? 46 : 34 }, "behold!"),
+compositeUrl && h("img", { src: compositeUrl, alt: "Exquisite Corpse drawing", style: { maxWidth: lg ? 320 : 200, width: "100%", height: "auto", marginTop: lg ? 16 : 10, border: "2px solid #1a1a1a", borderRadius: 4 } }),
+h("div", { style: { display: "flex", gap: lg ? 14 : 10, marginTop: lg ? 20 : 14, justifyContent: "center", flexShrink: 0 } },
+h(SketchBtn, { w: "auto", h: lg ? 52 : 42, fontSize: lg ? 18 : 14, onClick: saveToPhotos }, saveLabel),
+h(SketchBtn, { w: "auto", h: lg ? 52 : 42, fontSize: lg ? 18 : 14, onClick: function () { setScreen("landing"); } }, "home")
 )
 );
 }
@@ -332,40 +344,40 @@ h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: function () { setScreen(
 var turnLabels = ["draw the head", "draw the body", "draw the legs"];
 
 return h("div", { style: { width: "100%", height: "100vh", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", boxSizing: "border-box" } },
-h("div", { style: { textAlign: "center", padding: "10px 0 14px", flexShrink: 0 } },
-h("span", { style: { fontFamily: FONT, fontSize: 20, color: "#1a1a1a" } }, turnLabels[turn])
+h("div", { style: { textAlign: "center", padding: lg ? "14px 0 18px" : "10px 0 14px", flexShrink: 0 } },
+h("span", { style: { fontFamily: FONT, fontSize: lg ? 28 : 20, color: "#1a1a1a" } }, turnLabels[turn])
 ),
-h("div", { style: { display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "0 12px", flexShrink: 0 } },
+h("div", { style: { display: "flex", justifyContent: "center", alignItems: "flex-start", padding: lg ? "0 24px" : "0 12px", flexShrink: 0 } },
 h("canvas", {
 ref: canvasRef, width: CANVAS_W, height: CANVAS_H,
 onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerLeave: onUp,
-style: { width: "100%", maxWidth: 440, maxHeight: "40vh", border: "2px solid #1a1a1a", borderRadius: 4, touchAction: "none", cursor: "crosshair" }
+style: { width: "100%", maxWidth: lg ? 680 : 440, maxHeight: lg ? "50vh" : "40vh", border: "2px solid #1a1a1a", borderRadius: 4, touchAction: "none", cursor: "crosshair" }
 })
 ),
-h("div", { style: { flex: 1, padding: "20px 16px 24px", display: "flex", flexDirection: "column", gap: 20, alignItems: "center", justifyContent: "center", maxWidth: 440, margin: "0 auto", width: "100%", boxSizing: "border-box" } },
-h("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", maxWidth: 270 } },
+h("div", { style: { flex: 1, padding: lg ? "24px 24px 28px" : "20px 16px 24px", display: "flex", flexDirection: "column", gap: lg ? 24 : 20, alignItems: "center", justifyContent: "center", maxWidth: lg ? 680 : 440, margin: "0 auto", width: "100%", boxSizing: "border-box" } },
+h("div", { style: { display: "flex", gap: lg ? 14 : 10, flexWrap: "wrap", justifyContent: "center", maxWidth: lg ? 400 : 270 } },
 COLORS.map(function (c) {
 var isWhite = c === "#FFFFFF";
 var isSelected = isWhite ? erasing : (!erasing && color === c);
 return h("div", {
 key: c,
 onClick: function () { if (isWhite) { setErasing(true); } else { setColor(c); setErasing(false); } },
-style: { width: 42, height: 42, borderRadius: "50%", background: c, border: isSelected ? "3px solid #1a1a1a" : isWhite ? "2px solid #ccc" : "3px solid transparent", cursor: "pointer", boxSizing: "border-box" }
+style: { width: lg ? 58 : 42, height: lg ? 58 : 42, borderRadius: "50%", background: c, border: isSelected ? "3px solid #1a1a1a" : isWhite ? "2px solid #ccc" : "3px solid transparent", cursor: "pointer", boxSizing: "border-box" }
 });
 })
 ),
-h("div", { style: { display: "flex", alignItems: "center", gap: 12, justifyContent: "center" } },
+h("div", { style: { display: "flex", alignItems: "center", gap: lg ? 16 : 12, justifyContent: "center" } },
 SIZES.map(function (s) {
 return h("div", {
 key: s,
 onClick: function () { setSize(s); },
-style: { width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && !erasing ? 2.5 : 1.5) + "px solid " + (size === s && !erasing ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
+style: { width: lg ? 62 : 48, height: lg ? 62 : 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && !erasing ? 2.5 : 1.5) + "px solid " + (size === s && !erasing ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
 }, h("div", { style: { width: s / 1.1 + 2, height: s / 1.1 + 2, borderRadius: "50%", background: "#1a1a1a" } }));
 })
 ),
-h("div", { style: { display: "flex", gap: 12, width: "100%" } },
-h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: undo, style: { flex: 1 } }, "undo"),
-h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: handleDone, style: { flex: 1 } }, confirmDone ? "sure?" : "done")
+h("div", { style: { display: "flex", gap: lg ? 16 : 12, width: "100%" } },
+h(SketchBtn, { w: "auto", h: lg ? 60 : 50, fontSize: lg ? 22 : 18, onClick: undo, style: { flex: 1 } }, "undo"),
+h(SketchBtn, { w: "auto", h: lg ? 60 : 50, fontSize: lg ? 22 : 18, onClick: handleDone, style: { flex: 1 } }, confirmDone ? "sure?" : "done")
 )
 )
 );
