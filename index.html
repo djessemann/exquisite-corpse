@@ -319,8 +319,7 @@ var turnLabels = ["Draw the head", "Draw the body", "Draw the legs"];
 
 return h("div", { style: { width: "100%", height: "100vh", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", boxSizing: "border-box" } },
 h("div", { style: { textAlign: "center", padding: "10px 0 6px", flexShrink: 0 } },
-h("span", { style: { fontFamily: FONT, fontSize: 20, color: "#1a1a1a" } }, turnLabels[turn]),
-h("span", { style: { fontFamily: FONT, fontSize: 15, color: "#aaa", marginLeft: 10 } }, (turn + 1) + "/3")
+h("span", { style: { fontFamily: FONT, fontSize: 20, color: "#1a1a1a" } }, turnLabels[turn])
 ),
 turn > 0 && guideReady && h("div", { style: { width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 } },
 h("div", { style: { width: "100%", maxWidth: 440, padding: "0 12px", boxSizing: "border-box" } },
