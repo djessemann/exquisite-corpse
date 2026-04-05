@@ -175,9 +175,7 @@ gc.width = CANVAS_W; gc.height = GUIDE_H;
 var gctx = gc.getContext("2d");
 gctx.drawImage(img, 0, CANVAS_H - GUIDE_H, CANVAS_W, GUIDE_H, 0, 0, CANVAS_W, GUIDE_H);
 guideImageRef.current = gc;
-ctx.globalAlpha = 0.35;
 ctx.drawImage(gc, 0, 0);
-ctx.globalAlpha = 1.0;
 };
 img.src = sections[turn - 1];
 } else {
