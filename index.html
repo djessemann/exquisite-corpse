@@ -234,7 +234,7 @@ var saveToPhotos = useCallback(function () {
 var c = compositeCanvasRef.current;
 if (!c) return;
 setSaveLabel("saving");
-var pad = 20;
+var pad = 50;
 var pc = document.createElement("canvas");
 pc.width = c.width + pad * 2;
 pc.height = c.height + pad * 2;
