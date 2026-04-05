@@ -111,6 +111,10 @@ var _saveLabel = useState("save to photos"), saveLabel = _saveLabel[0], setSaveL
 var canvasRef = useRef(null);
 var compositeCanvasRef = useRef(null);
 var guideImageRef = useRef(null);
+var turnRef = useRef(0);
+turnRef.current = turn;
+var sectionsRef = useRef([null, null, null]);
+sectionsRef.current = sections;
 var _strokes = useState([]), strokes = _strokes[0], setStrokes = _strokes[1];
 var _curStroke = useState(null), currentStroke = _curStroke[0], setCurrentStroke = _curStroke[1];
 var _color = useState(COLORS[0]), color = _color[0], setColor = _color[1];
@@ -174,7 +178,9 @@ var ctx = canvasRef.current && canvasRef.current.getContext("2d");
 if (!ctx) return;
 ctx.fillStyle = "#FFFFFF";
 ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-if (turn > 0 && sections[turn - 1]) {
+var t = turnRef.current;
+var secs = sectionsRef.current;
+if (t > 0 && secs[t - 1]) {
 var img = new Image();
 img.onload = function () {
 var gc = document.createElement("canvas");
@@ -184,7 +190,7 @@ gctx.drawImage(img, 0, CANVAS_H - GUIDE_H, CANVAS_W, GUIDE_H, 0, 0, CANVAS_W, GU
 guideImageRef.current = gc;
 redrawAll(ctx, [], gc);
 };
-img.src = sections[turn - 1];
+img.src = secs[t - 1];
 } else {
 guideImageRef.current = null;
 }
@@ -194,7 +200,7 @@ setConfirmDone(false);
 setErasing(false);
 setColor(COLORS[0]);
 setSize(SIZES[1]);
-}, [turn, sections]);
+}, []);
 
 var captureSection = useCallback(function () {
 var url = canvasRef.current.toDataURL("image/png");
