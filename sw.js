@@ -1,17 +1,15 @@
-var CACHE_NAME = 'corpse-v9';
-var URLS_TO_CACHE = [
+var CACHE_NAME = 'corpse-v10';
+var LOCAL_URLS = [
   './',
   './index.html',
   './manifest.json',
-  'https://unpkg.com/react@18/umd/react.production.min.js',
-  'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-  'https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap'
+  './icon.svg'
 ];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(URLS_TO_CACHE);
+      return cache.addAll(LOCAL_URLS);
     })
   );
   self.skipWaiting();
@@ -34,7 +32,7 @@ self.addEventListener('fetch', function (e) {
     caches.match(e.request).then(function (cached) {
       if (cached) return cached;
       return fetch(e.request).then(function (response) {
-        if (response && response.status === 200) {
+        if (response && response.status === 200 && response.type !== 'opaque') {
           var clone = response.clone();
           caches.open(CACHE_NAME).then(function (cache) {
             cache.put(e.request, clone);
