@@ -108,6 +108,7 @@ var _turn = useState(0), turn = _turn[0], setTurn = _turn[1];
 var _sections = useState([null, null, null]), sections = _sections[0], setSections = _sections[1];
 var _composite = useState(null), compositeUrl = _composite[0], setCompositeUrl = _composite[1];
 var _confirmDone = useState(false), confirmDone = _confirmDone[0], setConfirmDone = _confirmDone[1];
+var _confirmHome = useState(false), confirmHome = _confirmHome[0], setConfirmHome = _confirmHome[1];
 var _saveLabel = useState("save to photos"), saveLabel = _saveLabel[0], setSaveLabel = _saveLabel[1];
 
 var canvasRef = useRef(null);
@@ -235,6 +236,7 @@ img.src = src;
 
 useEffect(function () {
 if (screen === "reveal") {
+setConfirmHome(false);
 buildComposite().then(function (c) {
 compositeCanvasRef.current = c;
 setCompositeUrl(c.toDataURL("image/png"));
@@ -336,7 +338,7 @@ h(Title, { size: lg ? 46 : 34 }, "behold!"),
 compositeUrl && h("img", { src: compositeUrl, alt: "Exquisite Corpse drawing", style: { maxWidth: lg ? 320 : 200, width: "100%", height: "auto", marginTop: lg ? 16 : 10, border: "2px solid #1a1a1a", borderRadius: 4 } }),
 h("div", { style: { display: "flex", gap: lg ? 14 : 10, marginTop: lg ? 20 : 14, justifyContent: "center", flexShrink: 0 } },
 h(SketchBtn, { w: "auto", h: lg ? 52 : 42, fontSize: lg ? 18 : 14, onClick: saveToPhotos }, saveLabel),
-h(SketchBtn, { w: "auto", h: lg ? 52 : 42, fontSize: lg ? 18 : 14, onClick: function () { setScreen("landing"); } }, "home")
+h(SketchBtn, { w: "auto", h: lg ? 52 : 42, fontSize: lg ? 18 : 14, onClick: function () { if (!confirmHome) { setConfirmHome(true); } else { setConfirmHome(false); setScreen("landing"); } } }, confirmHome ? "sure?" : "home")
 )
 );
 }
