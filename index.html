@@ -91,7 +91,7 @@ var _turn = useState(0), turn = _turn[0], setTurn = _turn[1];
 var _sections = useState([null, null, null]), sections = _sections[0], setSections = _sections[1];
 var _composite = useState(null), compositeUrl = _composite[0], setCompositeUrl = _composite[1];
 var _confirmDone = useState(false), confirmDone = _confirmDone[0], setConfirmDone = _confirmDone[1];
-var _saveLabel = useState("Save to Photos"), saveLabel = _saveLabel[0], setSaveLabel = _saveLabel[1];
+var _saveLabel = useState("save to photos"), saveLabel = _saveLabel[0], setSaveLabel = _saveLabel[1];
 
 var canvasRef = useRef(null);
 var compositeCanvasRef = useRef(null);
@@ -202,7 +202,7 @@ if (screen === "reveal") {
 buildComposite().then(function (c) {
 compositeCanvasRef.current = c;
 setCompositeUrl(c.toDataURL("image/png"));
-setSaveLabel("Save to Photos");
+setSaveLabel("save to photos");
 });
 }
 }, [screen, buildComposite]);
@@ -210,16 +210,16 @@ setSaveLabel("Save to Photos");
 var saveToPhotos = useCallback(function () {
 var c = compositeCanvasRef.current;
 if (!c) return;
-setSaveLabel("Saving…");
+setSaveLabel("saving");
 c.toBlob(function (blob) {
-if (!blob) { setSaveLabel("Save to Photos"); return; }
+if (!blob) { setSaveLabel("save to photos"); return; }
 var file = new File([blob], "exquisite-corpse.png", { type: "image/png" });
 if (typeof navigator.share === "function" && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
 navigator.share({ files: [file], title: "Exquisite Corpse" }).then(function () {
-setSaveLabel("Saved!");
-setTimeout(function () { setSaveLabel("Save to Photos"); }, 1500);
+setSaveLabel("saved");
+setTimeout(function () { setSaveLabel("save to photos"); }, 1500);
 }).catch(function (err) {
-if (err.name === "AbortError") { setSaveLabel("Save to Photos"); return; }
+if (err.name === "AbortError") { setSaveLabel("save to photos"); return; }
 fallbackDownload(blob);
 });
 } else {
@@ -237,15 +237,15 @@ a.style.display = "none";
 document.body.appendChild(a);
 a.click();
 setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
-setSaveLabel("Downloaded!");
-setTimeout(function () { setSaveLabel("Save to Photos"); }, 1500);
+setSaveLabel("downloaded");
+setTimeout(function () { setSaveLabel("save to photos"); }, 1500);
 }
 
 var startNewGame = useCallback(function () {
 setTurn(0);
 setSections([null, null, null]);
 setCompositeUrl(null);
-setSaveLabel("Save to Photos");
+setSaveLabel("save to photos");
 setScreen("drawing");
 setTimeout(initCanvas, 50);
 }, [initCanvas]);
@@ -279,11 +279,8 @@ return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", backgroun
 h("svg", { width: 200, height: 60, viewBox: "0 0 200 60", style: { marginBottom: 8 } },
 h("path", { d: "M 8,30 C 18,5 28,55 42,20 C 56,-15 62,65 80,30 C 98,-5 104,60 122,25 C 136,-5 148,58 162,32 C 172,14 180,48 192,30", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
-h(Title, { size: 48 }, "Exquisite", h("br"), "Corpse"),
-h("p", { style: { fontFamily: FONT, fontSize: 17, color: "#888", textAlign: "center", margin: "4px 0 20px", lineHeight: 1.3 } },
-"Draw a head. Pass it on.", h("br"), "Draw a body. Pass it on.", h("br"), "Draw the legs. Reveal!"
-),
-h(SketchBtn, { w: 200, h: 56, onClick: startNewGame }, "Play")
+h(Title, { size: 48 }, "exquisite", h("br"), "corpse"),
+h(SketchBtn, { w: 200, h: 56, onClick: startNewGame }, "play")
 );
 }
 
@@ -294,26 +291,26 @@ return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", backgroun
 h("svg", { width: 60, height: 200, viewBox: "0 0 60 200", style: { marginBottom: -4 } },
 h("path", { d: "M 30,8 C 5,18 55,28 20,42 C -15,56 65,62 30,80 C -5,98 60,104 25,122 C -5,136 58,148 32,162 C 14,172 48,180 30,192", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
-h(Title, { size: 36 }, "Pass the device!"),
-h("p", { style: { fontFamily: FONT, fontSize: 19, color: "#888", textAlign: "center" } }, "Next player draws " + labels[turn]),
-h(SketchBtn, { w: 180, h: 52, onClick: continueToDrawing }, "Ready")
+h(Title, { size: 36 }, "pass the device"),
+h("p", { style: { fontFamily: FONT, fontSize: 19, color: "#888", textAlign: "center" } }, "next player draws " + labels[turn]),
+h(SketchBtn, { w: 180, h: 52, onClick: continueToDrawing }, "ready")
 );
 }
 
 // REVEAL
 if (screen === "reveal") {
 return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16, overflow: "auto" }) },
-h(Title, { size: 34 }, "Behold!"),
+h(Title, { size: 34 }, "behold"),
 compositeUrl && h("img", { src: compositeUrl, alt: "Exquisite Corpse drawing", style: { maxWidth: 200, width: "100%", height: "auto", marginTop: 10, border: "2px solid #1a1a1a", borderRadius: 4 } }),
 h("div", { style: { display: "flex", gap: 10, marginTop: 14, justifyContent: "center", flexShrink: 0 } },
 h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: saveToPhotos }, saveLabel),
-h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: function () { setScreen("landing"); } }, "Home")
+h(SketchBtn, { w: "auto", h: 42, fontSize: 14, onClick: function () { setScreen("landing"); } }, "home")
 )
 );
 }
 
 // DRAWING
-var turnLabels = ["Draw the head", "Draw the body", "Draw the legs"];
+var turnLabels = ["draw the head", "draw the body", "draw the legs"];
 
 return h("div", { style: { width: "100%", height: "100vh", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden", boxSizing: "border-box" } },
 h("div", { style: { textAlign: "center", padding: "10px 0 6px", flexShrink: 0 } },
@@ -353,8 +350,8 @@ style: { width: 48, height: 48, display: "flex", alignItems: "center", justifyCo
 })
 ),
 h("div", { style: { display: "flex", gap: 12, width: "100%" } },
-h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: undo, style: { flex: 1 } }, "Undo"),
-h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: handleDone, style: { flex: 1 } }, confirmDone ? "Sure?" : "Done")
+h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: undo, style: { flex: 1 } }, "undo"),
+h(SketchBtn, { w: "auto", h: 50, fontSize: 18, onClick: handleDone, style: { flex: 1 } }, confirmDone ? "sure" : "done")
 )
 )
 );
