@@ -234,7 +234,15 @@ var saveToPhotos = useCallback(function () {
 var c = compositeCanvasRef.current;
 if (!c) return;
 setSaveLabel("saving");
-c.toBlob(function (blob) {
+var pad = 20;
+var pc = document.createElement("canvas");
+pc.width = c.width + pad * 2;
+pc.height = c.height + pad * 2;
+var pctx = pc.getContext("2d");
+pctx.fillStyle = "#FFFFFF";
+pctx.fillRect(0, 0, pc.width, pc.height);
+pctx.drawImage(c, pad, pad);
+pc.toBlob(function (blob) {
 if (!blob) { setSaveLabel("save to photos"); return; }
 var file = new File([blob], "exquisite-corpse.png", { type: "image/png" });
 if (typeof navigator.share === "function" && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {

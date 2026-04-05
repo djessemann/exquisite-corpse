@@ -1,4 +1,4 @@
-var CACHE_NAME = 'corpse-v6';
+var CACHE_NAME = 'corpse-v7';
 var URLS_TO_CACHE = [
   './',
   './index.html',
