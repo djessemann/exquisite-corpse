@@ -291,10 +291,8 @@ h(SketchBtn, { w: 200, h: 56, onClick: startNewGame }, "Play")
 if (screen === "transition") {
 var labels = ["the head", "the body", "the legs"];
 return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }) },
-h("svg", { width: 60, height: 60, viewBox: "0 0 60 60" },
-h("path", { d: wobbleCircle(30, 30, 24, turn * 3), fill: "none", stroke: "#1a1a1a", strokeWidth: 2.5 }),
-h("path", { d: "M 22,28 L 30,20 L 38,28", fill: "none", stroke: "#1a1a1a", strokeWidth: 2.5, strokeLinecap: "round" }),
-h("path", { d: "M 30,20 L 30,42", fill: "none", stroke: "#1a1a1a", strokeWidth: 2.5, strokeLinecap: "round" })
+h("svg", { width: 60, height: 200, viewBox: "0 0 60 200", style: { marginBottom: -4 } },
+h("path", { d: "M 30,8 C 5,18 55,28 20,42 C -15,56 65,62 30,80 C -5,98 60,104 25,122 C -5,136 58,148 32,162 C 14,172 48,180 30,192", fill: "none", stroke: "#1a1a1a", strokeWidth: 3, strokeLinecap: "round" })
 ),
 h(Title, { size: 36 }, "Pass the device!"),
 h("p", { style: { fontFamily: FONT, fontSize: 19, color: "#888", textAlign: "center" } }, "Next player draws " + labels[turn]),
