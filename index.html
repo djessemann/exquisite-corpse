@@ -218,7 +218,7 @@ var buildComposite = useCallback(function () {
 return new Promise(function (resolve) {
 var c = document.createElement("canvas");
 c.width = CANVAS_W;
-c.height = CANVAS_H * 3;
+c.height = CANVAS_H * 3 - GUIDE_H * 2;
 var ctx = c.getContext("2d");
 ctx.fillStyle = "#FFFFFF";
 ctx.fillRect(0, 0, c.width, c.height);
@@ -226,7 +226,8 @@ var loaded = 0;
 sections.forEach(function (src, i) {
 if (!src) { loaded++; if (loaded === 3) resolve(c); return; }
 var img = new Image();
-img.onload = function () { ctx.drawImage(img, 0, i * CANVAS_H); loaded++; if (loaded === 3) resolve(c); };
+var y = i * (CANVAS_H - GUIDE_H);
+img.onload = function () { ctx.drawImage(img, 0, y); loaded++; if (loaded === 3) resolve(c); };
 img.src = src;
 });
 });
