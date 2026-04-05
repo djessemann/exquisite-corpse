@@ -81,9 +81,22 @@ for (var i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].
 ctx.stroke();
 }
 
-function redrawAll(ctx, strokes) {
+function redrawAll(ctx, strokes, guideImg) {
 ctx.fillStyle = "#FFFFFF";
 ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+if (guideImg) {
+ctx.globalAlpha = 0.35;
+ctx.drawImage(guideImg, 0, 0);
+ctx.globalAlpha = 1.0;
+ctx.setLineDash([6, 4]);
+ctx.strokeStyle = "#1a1a1a";
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(0, GUIDE_H);
+ctx.lineTo(CANVAS_W, GUIDE_H);
+ctx.stroke();
+ctx.setLineDash([]);
+}
 strokes.forEach(function (s) { drawStroke(ctx, s); });
 }
 
@@ -97,6 +110,7 @@ var _saveLabel = useState("save to photos"), saveLabel = _saveLabel[0], setSaveL
 
 var canvasRef = useRef(null);
 var compositeCanvasRef = useRef(null);
+var guideImageRef = useRef(null);
 var _strokes = useState([]), strokes = _strokes[0], setStrokes = _strokes[1];
 var _curStroke = useState(null), currentStroke = _curStroke[0], setCurrentStroke = _curStroke[1];
 var _color = useState(COLORS[0]), color = _color[0], setColor = _color[1];
@@ -150,7 +164,7 @@ var undo = useCallback(function () {
 setStrokes(function (prev) {
 var next = prev.slice(0, -1);
 var ctx = canvasRef.current && canvasRef.current.getContext("2d");
-if (ctx) redrawAll(ctx, next);
+if (ctx) redrawAll(ctx, next, guideImageRef.current);
 return next;
 });
 }, []);
@@ -160,13 +174,27 @@ var ctx = canvasRef.current && canvasRef.current.getContext("2d");
 if (!ctx) return;
 ctx.fillStyle = "#FFFFFF";
 ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+if (turn > 0 && sections[turn - 1]) {
+var img = new Image();
+img.onload = function () {
+var gc = document.createElement("canvas");
+gc.width = CANVAS_W; gc.height = GUIDE_H;
+var gctx = gc.getContext("2d");
+gctx.drawImage(img, 0, CANVAS_H - GUIDE_H, CANVAS_W, GUIDE_H, 0, 0, CANVAS_W, GUIDE_H);
+guideImageRef.current = gc;
+redrawAll(ctx, [], gc);
+};
+img.src = sections[turn - 1];
+} else {
+guideImageRef.current = null;
+}
 setStrokes([]);
 setCurrentStroke(null);
 setConfirmDone(false);
 setErasing(false);
 setColor(COLORS[0]);
 setSize(SIZES[1]);
-}, []);
+}, [turn, sections]);
 
 var captureSection = useCallback(function () {
 var url = canvasRef.current.toDataURL("image/png");
@@ -257,21 +285,6 @@ setScreen("drawing");
 setTimeout(initCanvas, 50);
 }, [initCanvas]);
 
-var _guideReady = useState(null), guideReady = _guideReady[0], setGuideReady = _guideReady[1];
-useEffect(function () {
-if (screen !== "drawing" || turn === 0) { setGuideReady(null); return; }
-var src = sections[turn - 1];
-if (!src) { setGuideReady(null); return; }
-var img = new Image();
-img.onload = function () {
-var c = document.createElement("canvas");
-c.width = CANVAS_W; c.height = GUIDE_H;
-var ctx = c.getContext("2d");
-ctx.drawImage(img, 0, CANVAS_H - GUIDE_H, CANVAS_W, GUIDE_H, 0, 0, CANVAS_W, GUIDE_H);
-setGuideReady(c.toDataURL());
-};
-img.src = src;
-}, [screen, turn, sections]);
 
 var wrap = { width: "100%", maxWidth: 440, margin: "0 auto", padding: "0 16px", boxSizing: "border-box" };
 
@@ -321,16 +334,11 @@ return h("div", { style: { width: "100%", height: "100vh", background: "#fff", d
 h("div", { style: { textAlign: "center", padding: "10px 0 14px", flexShrink: 0 } },
 h("span", { style: { fontFamily: FONT, fontSize: 20, color: "#1a1a1a" } }, turnLabels[turn])
 ),
-turn > 0 && guideReady && h("div", { style: { width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 } },
-h("div", { style: { width: "100%", maxWidth: 440, padding: "0 12px", boxSizing: "border-box" } },
-h("img", { src: guideReady, alt: "", style: { width: "100%", display: "block", borderTop: "2px solid #1a1a1a", borderLeft: "2px solid #1a1a1a", borderRight: "2px solid #1a1a1a", borderRadius: "4px 4px 0 0", opacity: 0.4 } })
-)
-),
 h("div", { style: { display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "0 12px", flexShrink: 0 } },
 h("canvas", {
 ref: canvasRef, width: CANVAS_W, height: CANVAS_H,
 onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerLeave: onUp,
-style: { width: "100%", maxWidth: 440, maxHeight: "40vh", border: "2px solid #1a1a1a", borderRadius: turn > 0 && guideReady ? "0 0 4px 4px" : 4, touchAction: "none", cursor: "crosshair" }
+style: { width: "100%", maxWidth: 440, maxHeight: "40vh", border: "2px solid #1a1a1a", borderRadius: 4, touchAction: "none", cursor: "crosshair" }
 })
 ),
 h("div", { style: { flex: 1, padding: "20px 16px 24px", display: "flex", flexDirection: "column", gap: 20, alignItems: "center", justifyContent: "center", maxWidth: 440, margin: "0 auto", width: "100%", boxSizing: "border-box" } },
