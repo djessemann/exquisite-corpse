@@ -85,9 +85,7 @@ function redrawAll(ctx, strokes, guideImg) {
 ctx.fillStyle = "#FFFFFF";
 ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 if (guideImg) {
-ctx.globalAlpha = 0.35;
 ctx.drawImage(guideImg, 0, 0);
-ctx.globalAlpha = 1.0;
 }
 strokes.forEach(function (s) { drawStroke(ctx, s); });
 }
@@ -194,12 +192,9 @@ setSize(SIZES[1]);
 }, [initCount]);
 
 var captureSection = useCallback(function () {
-var ctx = canvasRef.current.getContext("2d");
-redrawAll(ctx, strokes, null);
 var url = canvasRef.current.toDataURL("image/png");
-redrawAll(ctx, strokes, guideImageRef.current);
 setSections(function (prev) { var n = prev.slice(); n[turn] = url; return n; });
-}, [turn, strokes]);
+}, [turn]);
 
 var handleDone = useCallback(function () {
 if (!confirmDone) { setConfirmDone(true); return; }
