@@ -44,6 +44,25 @@ const COLORS = ["#1a1a1a","#c0392b","#f57c00","#ffd740","#27ae60","#1565c0","#9b
 const SIZES = [3, 8, 18];
 const FONT = "'Space Mono', monospace";
 
+// pencil icons for the size buttons: one filled path per size, rounded only at the
+// blunt end and the point so the white collar lands exactly on the body edges
+const PEN_HALF = { 3: 2.6, 8: 3.8, 18: 5.0 };
+const PEN_TOP = 4, PEN_BOT = 20, PEN_BB = 15.2, PEN_COLLAR = 2.5;
+const PEN_VB = "2.81 2.41 18.78 18.78";
+
+function pencilPath(hw) {
+var rt = 1.1, f = 0.24, tipLen = PEN_BOT - PEN_BB;
+var fx = f * hw, fy = PEN_BOT - f * tipLen;
+return "M " + (12 - hw) + " " + (PEN_TOP + rt) +
+" Q " + (12 - hw) + " " + PEN_TOP + " " + (12 - hw + rt) + " " + PEN_TOP +
+" L " + (12 + hw - rt) + " " + PEN_TOP +
+" Q " + (12 + hw) + " " + PEN_TOP + " " + (12 + hw) + " " + (PEN_TOP + rt) +
+" L " + (12 + hw) + " " + PEN_BB +
+" L " + (12 + fx) + " " + fy +
+" Q 12 " + PEN_BOT + " " + (12 - fx) + " " + fy +
+" L " + (12 - hw) + " " + PEN_BB + " Z";
+}
+
 function wobbleCircle(cx, cy, r, seed) {
 var pts = 12, d = "";
 for (var i = 0; i <= pts; i++) {
@@ -437,7 +456,11 @@ return h("div", {
 key: s,
 onClick: function () { setSize(s); if (tool === "fill") setTool(color === "#FFFFFF" ? "eraser" : "pen"); },
 style: { width: lg ? 62 : 48, height: lg ? 62 : 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && tool === "pen" ? 2.5 : 1.5) + "px solid " + (size === s && tool === "pen" ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
-}, h("div", { style: { width: s / 1.1 + 2, height: s / 1.1 + 2, borderRadius: "50%", background: "#1a1a1a" } }));
+}, h("svg", { width: lg ? 34 : 27, height: lg ? 34 : 27, viewBox: PEN_VB },
+h("g", { transform: "rotate(45 12 12)" },
+h("path", { d: pencilPath(PEN_HALF[s]), fill: "#1a1a1a" }),
+h("rect", { x: 12 - PEN_HALF[s], y: PEN_BB - PEN_COLLAR, width: PEN_HALF[s] * 2, height: PEN_COLLAR, fill: "#fff" })
+)));
 }),
 h("div", {
 onClick: function () { setTool(tool === "fill" ? (color === "#FFFFFF" ? "eraser" : "pen") : "fill"); },
