@@ -1,4 +1,4 @@
-var CACHE_NAME = 'corpse-v12';
+var CACHE_NAME = 'corpse-v13';
 var LOCAL_URLS = [
   './',
   './index.html',

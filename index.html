@@ -92,13 +92,63 @@ for (var i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].
 ctx.stroke();
 }
 
+function hexToRgb(hex) {
+var h = hex.replace("#", "");
+return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+var FILL_TOL = 48;
+
+function fillRegion(ctx, fx, fy, hex) {
+var px = Math.round(fx), py = Math.round(fy);
+if (px < 0 || py < 0 || px >= CANVAS_W || py >= CANVAS_H) return false;
+var img = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
+var d = img.data;
+var start = (py * CANVAS_W + px) * 4;
+var tr = d[start], tg = d[start + 1], tb = d[start + 2];
+var rgb = hexToRgb(hex), nr = rgb[0], ng = rgb[1], nb = rgb[2];
+if (tr === nr && tg === ng && tb === nb) return false;
+var tol2 = FILL_TOL * FILL_TOL * 3;
+function match(i) {
+var dr = d[i] - tr, dg = d[i + 1] - tg, db = d[i + 2] - tb;
+return dr * dr + dg * dg + db * db <= tol2;
+}
+var seen = new Uint8Array(CANVAS_W * CANVAS_H);
+var stack = [py * CANVAS_W + px];
+while (stack.length) {
+var idx = stack.pop();
+var cy = (idx / CANVAS_W) | 0;
+var cx = idx - cy * CANVAS_W;
+var xL = cx;
+while (xL >= 0 && match((cy * CANVAS_W + xL) * 4)) xL--;
+xL++;
+var xR = cx;
+while (xR < CANVAS_W && match((cy * CANVAS_W + xR) * 4)) xR++;
+xR--;
+for (var i = xL; i <= xR; i++) {
+var pi = cy * CANVAS_W + i;
+if (seen[pi]) continue;
+seen[pi] = 1;
+var o = pi * 4;
+d[o] = nr; d[o + 1] = ng; d[o + 2] = nb; d[o + 3] = 255;
+if (cy > 0) { var up = pi - CANVAS_W; if (!seen[up] && match(up * 4)) stack.push(up); }
+if (cy < CANVAS_H - 1) { var dn = pi + CANVAS_W; if (!seen[dn] && match(dn * 4)) stack.push(dn); }
+}
+}
+ctx.putImageData(img, 0, 0);
+return true;
+}
+
 function redrawAll(ctx, strokes, guideImg) {
 ctx.fillStyle = "#FFFFFF";
 ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 if (guideImg) {
 ctx.drawImage(guideImg, 0, 0);
 }
-strokes.forEach(function (s) { drawStroke(ctx, s); });
+strokes.forEach(function (s) {
+if (s.fill) fillRegion(ctx, s.x, s.y, s.color);
+else drawStroke(ctx, s);
+});
 }
 
 function App() {
@@ -118,7 +168,7 @@ var _strokes = useState([]), strokes = _strokes[0], setStrokes = _strokes[1];
 var _curStroke = useState(null), currentStroke = _curStroke[0], setCurrentStroke = _curStroke[1];
 var _color = useState(COLORS[0]), color = _color[0], setColor = _color[1];
 var _size = useState(SIZES[1]), size = _size[0], setSize = _size[1];
-var _erasing = useState(false), erasing = _erasing[0], setErasing = _erasing[1];
+var _tool = useState("pen"), tool = _tool[0], setTool = _tool[1];
 var drawing = useRef(false);
 
 var getPos = useCallback(function (e) {
@@ -131,9 +181,17 @@ return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
 
 var onDown = useCallback(function (e) {
 e.preventDefault();
+if (tool === "fill") {
+var ctx = canvasRef.current && canvasRef.current.getContext("2d");
+if (!ctx) return;
+var fp = getPos(e);
+if (!fillRegion(ctx, fp.x, fp.y, color)) return;
+setStrokes(function (prev) { return prev.concat([{ fill: true, x: fp.x, y: fp.y, color: color }]); });
+return;
+}
 drawing.current = true;
-setCurrentStroke({ points: [getPos(e)], color: color, size: size, eraser: erasing });
-}, [getPos, color, size, erasing]);
+setCurrentStroke({ points: [getPos(e)], color: color, size: size, eraser: tool === "eraser" });
+}, [getPos, color, size, tool]);
 
 var onMove = useCallback(function (e) {
 e.preventDefault();
@@ -197,7 +255,7 @@ guideImageRef.current = null;
 setStrokes([]);
 setCurrentStroke(null);
 setConfirmDone(false);
-setErasing(false);
+setTool("pen");
 setColor(COLORS[0]);
 setSize(SIZES[1]);
 }, [initCount]);
@@ -354,17 +412,21 @@ h("div", { style: { display: "flex", justifyContent: "center", alignItems: "flex
 h("canvas", {
 ref: canvasRef, width: CANVAS_W, height: CANVAS_H,
 onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerLeave: onUp,
-style: { width: "100%", maxWidth: lg ? 680 : 440, maxHeight: lg ? "50vh" : "40vh", border: "2px solid #1a1a1a", borderRadius: 4, touchAction: "none", cursor: "crosshair" }
+style: { width: "100%", maxWidth: lg ? 680 : 440, maxHeight: lg ? "50vh" : "40vh", border: "2px solid #1a1a1a", borderRadius: 4, touchAction: "none", cursor: tool === "fill" ? "pointer" : "crosshair" }
 })
 ),
 h("div", { style: { flex: 1, padding: lg ? "24px 24px 28px" : "20px 16px 24px", display: "flex", flexDirection: "column", gap: lg ? 24 : 20, alignItems: "center", justifyContent: "center", maxWidth: lg ? 680 : 440, margin: "0 auto", width: "100%", boxSizing: "border-box" } },
 h("div", { style: { display: "flex", gap: lg ? 14 : 10, flexWrap: "wrap", justifyContent: "center", maxWidth: lg ? 400 : 270 } },
 COLORS.map(function (c) {
 var isWhite = c === "#FFFFFF";
-var isSelected = isWhite ? erasing : (!erasing && color === c);
+var isSelected = isWhite ? (tool === "eraser" || (tool === "fill" && color === c)) : (tool !== "eraser" && color === c);
 return h("div", {
 key: c,
-onClick: function () { if (isWhite) { setErasing(true); } else { setColor(c); setErasing(false); } },
+onClick: function () {
+if (isWhite && tool !== "fill") { setTool("eraser"); return; }
+setColor(c);
+if (tool === "eraser") setTool("pen");
+},
 style: { width: lg ? 58 : 42, height: lg ? 58 : 42, borderRadius: "50%", background: c, border: isSelected ? "3px solid #1a1a1a" : isWhite ? "2px solid #ccc" : "3px solid transparent", cursor: "pointer", boxSizing: "border-box" }
 });
 })
@@ -373,10 +435,20 @@ h("div", { style: { display: "flex", alignItems: "center", gap: lg ? 16 : 12, ju
 SIZES.map(function (s) {
 return h("div", {
 key: s,
-onClick: function () { setSize(s); },
-style: { width: lg ? 62 : 48, height: lg ? 62 : 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && !erasing ? 2.5 : 1.5) + "px solid " + (size === s && !erasing ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
+onClick: function () { setSize(s); if (tool === "fill") setTool(color === "#FFFFFF" ? "eraser" : "pen"); },
+style: { width: lg ? 62 : 48, height: lg ? 62 : 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && tool === "pen" ? 2.5 : 1.5) + "px solid " + (size === s && tool === "pen" ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
 }, h("div", { style: { width: s / 1.1 + 2, height: s / 1.1 + 2, borderRadius: "50%", background: "#1a1a1a" } }));
-})
+}),
+h("div", {
+onClick: function () { setTool(tool === "fill" ? (color === "#FFFFFF" ? "eraser" : "pen") : "fill"); },
+style: { width: lg ? 62 : 48, height: lg ? 62 : 48, marginLeft: lg ? 8 : 6, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (tool === "fill" ? 2.5 : 1.5) + "px solid " + (tool === "fill" ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
+}, h("svg", { width: lg ? 30 : 24, height: lg ? 30 : 24, viewBox: "0 0 24 24" },
+h("g", { transform: "rotate(-35 12 12)" },
+h("path", { d: "M 6.5 8 L 17.5 8 L 15.8 19.5 L 8.2 19.5 Z", fill: "#1a1a1a" }),
+h("path", { d: "M 8 8 A 4 4 0 0 1 16 8", fill: "none", stroke: "#1a1a1a", strokeWidth: 1.7 })
+),
+h("circle", { cx: 20.2, cy: 18.8, r: 1.7, fill: "#1a1a1a" })
+))
 ),
 h("div", { style: { display: "flex", gap: lg ? 16 : 12, width: "100%" } },
 h(SketchBtn, { w: "auto", h: lg ? 60 : 50, fontSize: lg ? 22 : 18, onClick: undo, style: { flex: 1 } }, "undo"),
