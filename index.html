@@ -443,11 +443,9 @@ h("div", {
 onClick: function () { setTool(tool === "fill" ? (color === "#FFFFFF" ? "eraser" : "pen") : "fill"); },
 style: { width: lg ? 62 : 48, height: lg ? 62 : 48, marginLeft: lg ? 8 : 6, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (tool === "fill" ? 2.5 : 1.5) + "px solid " + (tool === "fill" ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
 }, h("svg", { width: lg ? 30 : 24, height: lg ? 30 : 24, viewBox: "0 0 24 24" },
-h("g", { transform: "rotate(-35 12 12)" },
-h("path", { d: "M 6.5 8 L 17.5 8 L 15.8 19.5 L 8.2 19.5 Z", fill: "#1a1a1a" }),
-h("path", { d: "M 8 8 A 4 4 0 0 1 16 8", fill: "none", stroke: "#1a1a1a", strokeWidth: 1.7 })
-),
-h("circle", { cx: 20.2, cy: 18.8, r: 1.7, fill: "#1a1a1a" })
+h("path", { d: "M 10.5 4.4 L 17.6 11.5 L 10.5 18.6 L 3.4 11.5 Z", fill: "#1a1a1a" }),
+h("path", { d: "M 10.5 7.7 L 14.5 11.7 L 6.5 11.7 Z", fill: "#fff" }),
+h("path", { d: "M 19.9 13.6 C 19.9 13.6 18.1 16 18.1 17.2 A 1.8 1.8 0 0 0 21.7 17.2 C 21.7 16 19.9 13.6 19.9 13.6 Z", fill: "#1a1a1a" })
 ))
 ),
 h("div", { style: { display: "flex", gap: lg ? 16 : 12, width: "100%" } },
