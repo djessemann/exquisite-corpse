@@ -189,6 +189,7 @@ var _color = useState(COLORS[0]), color = _color[0], setColor = _color[1];
 var _size = useState(SIZES[1]), size = _size[0], setSize = _size[1];
 var _tool = useState("pen"), tool = _tool[0], setTool = _tool[1];
 var drawing = useRef(false);
+var activePointer = useRef(null);
 
 var getPos = useCallback(function (e) {
 var rect = canvasRef.current.getBoundingClientRect();
@@ -200,6 +201,9 @@ return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
 
 var onDown = useCallback(function (e) {
 e.preventDefault();
+// one finger at a time: a second touch while the first is down is ignored
+if (activePointer.current !== null) return;
+activePointer.current = e.pointerId;
 if (tool === "fill") {
 var ctx = canvasRef.current && canvasRef.current.getContext("2d");
 if (!ctx) return;
@@ -214,6 +218,7 @@ setCurrentStroke({ points: [getPos(e)], color: color, size: size, eraser: tool =
 
 var onMove = useCallback(function (e) {
 e.preventDefault();
+if (e.pointerId !== activePointer.current) return;
 if (!drawing.current || !currentStroke) return;
 var p = getPos(e);
 var ns = { points: currentStroke.points.concat([p]), color: currentStroke.color, size: currentStroke.size, eraser: currentStroke.eraser };
@@ -234,6 +239,8 @@ ctx.stroke();
 
 var onUp = useCallback(function (e) {
 e.preventDefault();
+if (e.pointerId !== activePointer.current) return;
+activePointer.current = null;
 if (!drawing.current) return;
 drawing.current = false;
 if (currentStroke && currentStroke.points.length >= 2) setStrokes(function (p) { return p.concat([currentStroke]); });
@@ -430,7 +437,7 @@ h("span", { style: { fontFamily: FONT, fontSize: lg ? 28 : 20, color: "#1a1a1a" 
 h("div", { style: { display: "flex", justifyContent: "center", alignItems: "flex-start", padding: lg ? "0 24px" : "0 12px", flexShrink: 0 } },
 h("canvas", {
 ref: canvasRef, width: CANVAS_W, height: CANVAS_H,
-onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerLeave: onUp,
+onPointerDown: onDown, onPointerMove: onMove, onPointerUp: onUp, onPointerLeave: onUp, onPointerCancel: onUp,
 style: { width: "100%", maxWidth: lg ? 680 : 440, maxHeight: lg ? "50vh" : "40vh", border: "2px solid #1a1a1a", borderRadius: 4, touchAction: "none", cursor: tool === "fill" ? "pointer" : "crosshair" }
 })
 ),
