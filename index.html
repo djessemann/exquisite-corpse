@@ -441,6 +441,8 @@ h("div", { style: { flex: 1, padding: lg ? "24px 24px 28px" : "20px 16px 24px", 
 h("div", { style: { display: "flex", gap: lg ? 14 : 10, flexWrap: "wrap", justifyContent: "center", maxWidth: lg ? 400 : 270 } },
 COLORS.map(function (c) {
 var isWhite = c === "#FFFFFF";
+// the ring is drawn inside the swatch, so a dark ring on the dark swatch is invisible
+var isBlack = c === "#1a1a1a";
 var isSelected = isWhite ? (tool === "eraser" || (tool === "fill" && color === c)) : (tool !== "eraser" && color === c);
 return h("div", {
 key: c,
@@ -450,7 +452,7 @@ if (isWhite && tool !== "fill") { setTool("eraser"); return; }
 setColor(c);
 if (tool === "eraser") setTool("pen");
 },
-style: { width: lg ? 58 : 42, height: lg ? 58 : 42, borderRadius: "50%", background: c, border: isSelected ? "3px solid #1a1a1a" : isWhite ? "2px solid #ccc" : "3px solid transparent", cursor: "pointer", boxSizing: "border-box" }
+style: { width: lg ? 58 : 42, height: lg ? 58 : 42, borderRadius: "50%", background: c, border: isSelected ? (isBlack ? "3px solid #ccc" : "3px solid #1a1a1a") : isWhite ? "2px solid #ccc" : "3px solid transparent", cursor: "pointer", boxSizing: "border-box" }
 });
 })
 ),
