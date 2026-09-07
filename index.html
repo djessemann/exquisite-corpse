@@ -459,7 +459,7 @@ SIZES.map(function (s) {
 return h("div", {
 key: s,
 onClick: function () { setConfirmDone(false); setSize(s); if (tool === "fill") setTool(color === "#FFFFFF" ? "eraser" : "pen"); },
-style: { width: lg ? 62 : 48, height: lg ? 62 : 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && tool === "pen" ? 2.5 : 1.5) + "px solid " + (size === s && tool === "pen" ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
+style: { width: lg ? 62 : 48, height: lg ? 62 : 48, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: (size === s && tool !== "fill" ? 2.5 : 1.5) + "px solid " + (size === s && tool !== "fill" ? "#1a1a1a" : "#ddd"), cursor: "pointer", boxSizing: "border-box" }
 }, h("svg", { width: lg ? 34 : 27, height: lg ? 34 : 27, viewBox: PEN_VB },
 h("g", { transform: "rotate(45 12 12)" },
 h("path", { d: pencilPath(PEN_HALF[s]), fill: "#1a1a1a" }),
