@@ -4,6 +4,7 @@ from PIL import Image
 from skimage import measure, morphology
 from skan import Skeleton, summarize
 import potrace
+from scipy import ndimage
 
 src='/root/.claude/uploads/7f6f7cde-65fc-5c00-9001-36c3aa42a404/93bba040-image.jpg'
 a=np.array(Image.open(src).convert('L'))
@@ -29,9 +30,16 @@ fills=[(0,1),(2,20),(3,21),(4,5),(6,7),(18,27),(19,28),(22,29),(23,31),(30,47)]
 for i,k in enumerate(fills): GROUPS['fill%d'%(i+1)]=('fill',list(k))
 
 PAD=6
-def crop_mask(ids):
+GAP={'penF3':7}
+def crop_mask(ids,gap=0):
     m=np.zeros(lab.shape,bool)
     for i in ids: m|=(lab==labof[i])
+    if gap and len(ids)==2:
+        body=lab==labof[ids[0]]; tip=lab==labof[ids[1]]
+        cb=np.array(ndimage.center_of_mass(body)); ct=np.array(ndimage.center_of_mass(tip))
+        v=ct-cb; v=v/np.linalg.norm(v)*gap
+        tip=ndimage.shift(tip.astype(float),v,order=0)>0.5
+        m=body|tip
     ys,xs=np.nonzero(m); y0,y1,x0,x1=ys.min()-PAD,ys.max()+PAD+1,xs.min()-PAD,xs.max()+PAD+1
     return m[y0:y1,x0:x1]
 
@@ -78,6 +86,74 @@ def trace_stroke(m):
         d.append(catmull(pts))
     return ' '.join(d), width
 
+from scipy import ndimage
+def trace_ring(m,square=False,straighten=0.0):
+    """closed outline: midline between outer and inner edge of the marker line"""
+    dt0=ndimage.distance_transform_edt(m); sk0=morphology.skeletonize(m)
+    w0=float(np.median(dt0[sk0])*2)
+    mc=ndimage.binary_closing(m,structure=morphology.disk(int(round(w0*1.3))),border_value=0)
+    filled=ndimage.binary_fill_holes(mc)
+    hole=filled & ~mc
+    hole=morphology.remove_small_objects(hole,200)
+    if hole.sum()<200: return None
+    lab2=measure.label(hole); sizes=np.bincount(lab2.ravel()); sizes[0]=0
+    hole=lab2==sizes.argmax()
+    dt=ndimage.distance_transform_edt(m)
+    sk=morphology.skeletonize(m)
+    width=float(np.median(dt[sk])*2)
+    r=max(1,int(round(width/2)))
+    mid=ndimage.binary_dilation(hole,structure=(morphology.square(2*r+1) if square else morphology.disk(r)))
+    mid=ndimage.binary_opening(mid,structure=morphology.disk(2))
+    cs=measure.find_contours(mid.astype(float),0.5)
+    c=max(cs,key=len)
+    pts=np.c_[c[:,1],c[:,0]]
+    # circular smoothing
+    k=9; n=len(pts); out=pts.copy()
+    for i in range(n):
+        idx=[(i+j)%n for j in range(-k//2,k//2+1)]; out[i]=pts[idx].mean(0)
+    pts=resample(out,5.0)
+    dev=(0.0,0.0)
+    if straighten>0:
+        x0,y0=pts.min(0); x1,y1=pts.max(0)
+        dl=pts[:,0]-x0; dr=x1-pts[:,0]; dt=pts[:,1]-y0; db=y1-pts[:,1]
+        near=np.argmin(np.c_[dl,dr,dt,db],axis=1)
+        # each edge's line is the median of the points nearest to it, so edges move both ways
+        L=np.median(pts[near==0,0]); R=np.median(pts[near==1,0]); T=np.median(pts[near==2,1]); B=np.median(pts[near==3,1])
+        cz=0.12*min(x1-x0,y1-y0)
+        tgt=pts.copy()
+        tgt[near==0,0]=L; tgt[near==1,0]=R; tgt[near==2,1]=T; tgt[near==3,1]=B
+        # points in a corner zone head for the corner itself, which keeps corners crisp
+        nearx=np.minimum(np.abs(pts[:,0]-L),np.abs(pts[:,0]-R)); neary=np.minimum(np.abs(pts[:,1]-T),np.abs(pts[:,1]-B))
+        corner=(nearx<cz)&(neary<cz)
+        cx=np.where(np.abs(pts[:,0]-L)<np.abs(pts[:,0]-R),L,R); cy=np.where(np.abs(pts[:,1]-T)<np.abs(pts[:,1]-B),T,B)
+        tgt[corner,0]=cx[corner]; tgt[corner,1]=cy[corner]
+        pts=pts+(tgt-pts)*straighten
+        # smooth again lightly, then measure how far the line still bows inward
+        k=5; n=len(pts); out2=pts.copy()
+        for i in range(n):
+            idx=[(i+j)%n for j in range(-k//2,k//2+1)]; out2[i]=pts[idx].mean(0)
+        pts=out2
+        x0,y0=pts.min(0); x1,y1=pts.max(0)
+        dl=pts[:,0]-x0; dr=x1-pts[:,0]; dt=pts[:,1]-y0; db=y1-pts[:,1]
+        # inward bow along left/right edges (x) and top/bottom edges (y), ignoring the corners
+        side=np.minimum(dl,dr); topb=np.minimum(dt,db)
+        devx=float(side[topb>(y1-y0)*0.18].max()/(x1-x0)) if (topb>(y1-y0)*0.18).any() else 0.0
+        devy=float(topb[side>(x1-x0)*0.18].max()/(y1-y0)) if (side>(x1-x0)*0.18).any() else 0.0
+        dev=(round(devx,4),round(devy,4))
+    mn=pts.min(0); pts=pts-mn; ext=pts.max(0)
+    pts=np.vstack([pts,pts[:1]])
+    d=catmull_closed(pts)
+    return d,width,dev,(int(np.ceil(ext[0])),int(np.ceil(ext[1])))
+
+def catmull_closed(pts):
+    p=pts[:-1]; n=len(p)
+    d='M%.1f %.1f'%(p[0,0],p[0,1])
+    for i in range(n):
+        p0,p1,p2,p3=p[(i-1)%n],p[i],p[(i+1)%n],p[(i+2)%n]
+        c1=p1+(p2-p0)/6; c2=p2-(p3-p1)/6
+        d+=' C%.1f %.1f %.1f %.1f %.1f %.1f'%(c1[0],c1[1],c2[0],c2[1],p2[0],p2[1])
+    return d+' Z'
+
 def trace_fill(m):
     m=morphology.remove_small_holes(m,400)
     bmp=potrace.Bitmap(~m)
@@ -95,9 +171,14 @@ def trace_fill(m):
 
 out={}
 for name,(kind,ids) in GROUPS.items():
-    m=crop_mask(ids); h,w=m.shape
+    m=crop_mask(ids,GAP.get(name,0)); h,w=m.shape
     if kind=='stroke':
-        d,width=trace_stroke(m); out[name]={'kind':kind,'w':w,'h':h,'d':d,'mw':round(float(width),1)}
+        rr=trace_ring(m,square=name[:4]!='circ',straighten=(0.5 if name.startswith('frame') else 0.0)) if name[:4] in ('rect','fram','circ') else None
+        if rr: d,width,dev,(w,h)=rr
+        else: d,width=trace_stroke(m); dev=(0,0)
+        if name[:4] in ('rect','fram','circ') and not rr: print('  fallback skeleton for',name)
+        out[name]={'kind':kind,'w':w,'h':h,'d':d,'mw':round(float(width),1),'dev':list(dev)}
+        if name.startswith('frame'): print('   ',name,'inward bow x,y as fraction:',dev)
     else:
         d=trace_fill(m); out[name]={'kind':kind,'w':w,'h':h,'d':d}
     print(name,kind,w,h,len(d))
