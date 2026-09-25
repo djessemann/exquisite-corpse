@@ -173,7 +173,7 @@ out={}
 for name,(kind,ids) in GROUPS.items():
     m=crop_mask(ids,GAP.get(name,0)); h,w=m.shape
     if kind=='stroke':
-        rr=trace_ring(m,square=name[:4]!='circ',straighten=(0.5 if name.startswith('frame') else 0.0)) if name[:4] in ('rect','fram','circ') else None
+        rr=trace_ring(m,square=name[:4]!='circ',straighten=(0.5 if name.startswith('frame') else (0.4 if name.startswith('rect') else 0.0))) if name[:4] in ('rect','fram','circ') else None
         if rr: d,width,dev,(w,h)=rr
         else: d,width=trace_stroke(m); dev=(0,0)
         if name[:4] in ('rect','fram','circ') and not rr: print('  fallback skeleton for',name)
