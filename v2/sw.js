@@ -1,0 +1,49 @@
+var CACHE_PREFIX = 'corpse-v2app-';
+var CACHE_NAME = CACHE_PREFIX + '1';
+var LOCAL_URLS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.svg'
+];
+
+self.addEventListener('install', function (e) {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(function (cache) {
+      return cache.addAll(LOCAL_URLS);
+    })
+  );
+  self.skipWaiting();
+});
+
+// only clear our own older caches; the root app keeps its own
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys().then(function (names) {
+      return Promise.all(
+        names.filter(function (n) { return n.indexOf(CACHE_PREFIX) === 0 && n !== CACHE_NAME; })
+          .map(function (n) { return caches.delete(n); })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', function (e) {
+  e.respondWith(
+    caches.match(e.request).then(function (cached) {
+      if (cached) return cached;
+      return fetch(e.request).then(function (response) {
+        if (response && response.status === 200 && response.type !== 'opaque') {
+          var clone = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(e.request, clone);
+          });
+        }
+        return response;
+      }).catch(function () {
+        return caches.match('./index.html');
+      });
+    })
+  );
+});
