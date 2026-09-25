@@ -1,9 +1,14 @@
-var CACHE_NAME = 'corpse-v22';
+var CACHE_NAME = 'corpse-v23';
 var LOCAL_URLS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './vendor/react.production.min.js',
+  './vendor/react-dom.production.min.js',
+  './fonts/space-mono.css',
+  './fonts/space-mono-400.woff2',
+  './fonts/space-mono-700.woff2'
 ];
 
 self.addEventListener('install', function (e) {
@@ -19,7 +24,8 @@ self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys().then(function (names) {
       return Promise.all(
-        names.filter(function (n) { return n !== CACHE_NAME; })
+        // clear our own older caches only; the v2 app under /v2/ keeps its own
+        names.filter(function (n) { return n !== CACHE_NAME && n.indexOf('corpse-v2app-') !== 0; })
           .map(function (n) { return caches.delete(n); })
       );
     })

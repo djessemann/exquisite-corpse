@@ -1,10 +1,15 @@
 var CACHE_PREFIX = 'corpse-v2app-';
-var CACHE_NAME = CACHE_PREFIX + '2';
+var CACHE_NAME = CACHE_PREFIX + '3';
 var LOCAL_URLS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  '../vendor/react.production.min.js',
+  '../vendor/react-dom.production.min.js',
+  '../fonts/space-mono.css',
+  '../fonts/space-mono-400.woff2',
+  '../fonts/space-mono-700.woff2'
 ];
 
 self.addEventListener('install', function (e) {
