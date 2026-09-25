@@ -83,12 +83,11 @@ props.isWhite ? h(Glyph, { name: props.circ, stretch: true, color: "#ccc", lw: l
 props.selected ? h(Glyph, { name: props.circ, stretch: true, color: INK, lw: lw, style: abs(-1) }) : null);
 }
 
-// a tool: only the selected one gets a hand-drawn box; a flashing one fills the box, like a pressed button
+// a tool: only the selected one gets a hand-drawn box; a flashing one shows the same box briefly
 function ToolBox(props) {
 var S = props.size;
 var boxStyle = { position: "absolute", left: -4, top: -4, width: S + 8, height: S + 8 };
 return h("div", { onClick: props.onClick, style: { width: S, height: S, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 } },
-props.flash ? h(Glyph, { name: "frameL3", stretch: true, filled: true, color: INK, style: boxStyle }) : null,
 (props.sel || props.flash) ? h(Glyph, { name: "frameL3", stretch: true, lw: props.lw, style: boxStyle }) : null,
 h("div", { style: { position: "relative", display: "flex" } }, props.children));
 }
@@ -495,7 +494,7 @@ setUndoFlash(true);
 if (undoFlashTimer.current) clearTimeout(undoFlashTimer.current);
 undoFlashTimer.current = setTimeout(function () { setUndoFlash(false); }, 160);
 }
-}, h(Glyph, { name: "undo19", color: undoFlash ? "#fff" : INK, w: Math.round(S * 0.74), h: Math.round(S * 0.74) }))
+}, h(Glyph, { name: "undo19", w: Math.round(S * 0.74), h: Math.round(S * 0.74) }))
 ),
 h(SketchBtn, { w: ROW, h: lg ? 60 : 50, fontSize: lg ? 22 : 18, onClick: handleDone }, confirmDone ? "sure?" : "done")
 )
