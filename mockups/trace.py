@@ -143,7 +143,11 @@ def trace_ring(m,square=False,straighten=0.0,rounden=0.0):
     if rounden>0:
         # pull every point part of the way toward a true circle of the mean radius
         c=pts.mean(0); r=np.linalg.norm(pts-c,axis=1); R=r.mean()
-        pts=c+(pts-c)*((1-rounden)+rounden*R/np.maximum(r,1e-6))[:,None]
+        r2=(1-rounden)*r+rounden*R
+        # soft clamp: anything poking more than ~8% past the mean radius gets pulled most of the way in
+        hi=R*1.08; lo=R*0.92
+        r2=np.where(r2>hi,hi+(r2-hi)*0.25,r2); r2=np.where(r2<lo,lo+(r2-lo)*0.25,r2)
+        pts=c+(pts-c)*(r2/np.maximum(r,1e-6))[:,None]
         k=5; n=len(pts); out3=pts.copy()
         for i in range(n):
             idx=[(i+j)%n for j in range(-k//2,k//2+1)]; out3[i]=pts[idx].mean(0)
@@ -181,7 +185,7 @@ out={}
 for name,(kind,ids) in GROUPS.items():
     m=crop_mask(ids,GAP.get(name,0)); h,w=m.shape
     if kind=='stroke':
-        rr=trace_ring(m,square=name[:4]!='circ',straighten=(0.5 if name.startswith('frame') else (0.4 if name.startswith('rect') else 0.0)),rounden=(0.4 if name.startswith('circ') else 0.0)) if name[:4] in ('rect','fram','circ') else None
+        rr=trace_ring(m,square=name[:4]!='circ',straighten=(0.5 if name.startswith('frame') else (0.4 if name.startswith('rect') else 0.0)),rounden=(0.2 if name.startswith('circ') else 0.0)) if name[:4] in ('rect','fram','circ') else None
         if rr: d,width,dev,(w,h)=rr
         else: d,width=trace_stroke(m); dev=(0,0)
         if name[:4] in ('rect','fram','circ') and not rr: print('  fallback skeleton for',name)
