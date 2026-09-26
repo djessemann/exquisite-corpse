@@ -1,5 +1,5 @@
 var CACHE_PREFIX = 'corpse-v2app-';
-var CACHE_NAME = CACHE_PREFIX + '5';
+var CACHE_NAME = CACHE_PREFIX + '6';
 var LOCAL_URLS = [
   './',
   './index.html',
