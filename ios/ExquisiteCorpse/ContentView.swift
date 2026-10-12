@@ -202,12 +202,18 @@ struct ContentView: View {
                     }
                     .buttonStyle(style)
                 }
-                Button(confirmHome ? "sure?" : "home") {
+                Button {
                     if !confirmHome {
                         confirmHome = true
                     } else {
                         confirmHome = false
                         screen = .landing
+                    }
+                } label: {
+                    // always as wide as "sure?" so the button doesn't change size
+                    ZStack {
+                        Text("sure?").hidden()
+                        Text(confirmHome ? "sure?" : "home")
                     }
                 }
                 .buttonStyle(style)
