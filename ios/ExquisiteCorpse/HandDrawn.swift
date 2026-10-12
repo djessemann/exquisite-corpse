@@ -224,6 +224,9 @@ struct SketchButtonStyle: ButtonStyle {
             .background(configuration.isPressed ? ink : .white)
             .overlay(Rectangle().stroke(ink, lineWidth: 2))
             .contentShape(Rectangle())
+            // label and press state change instantly, like the web version
+            .contentTransition(.identity)
+            .transaction { $0.animation = nil }
     }
 }
 
