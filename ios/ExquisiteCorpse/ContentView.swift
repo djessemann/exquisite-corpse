@@ -52,7 +52,7 @@ struct ContentView: View {
         VStack(spacing: lg ? 44 : 32) {
             Squiggle(index: 0, lineWidth: lineWidth(lg))
                 .frame(width: lg ? 300 : 200, height: lg ? 80 : 60)
-            Title(lines: ["exquisite", "corpse"], size: lg ? 68 : 48)
+            Title(lines: ["exquisite", "sketch"], size: lg ? 68 : 48)
             Squiggle(index: 1, lineWidth: lineWidth(lg))
                 .frame(width: lg ? 300 : 200, height: lg ? 80 : 60)
             Button("play", action: startNewGame)
@@ -302,11 +302,11 @@ struct ContentView: View {
     // so "Save Image" puts the PNG in Photos and other apps get a real .png
     private func share() {
         guard let data = savedImage?.pngData() else { return }
-        // e.g. corpse-april-3-2026-0434pm.png
+        // e.g. sketch-april-3-2026-0434pm.png
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "MMMM-d-yyyy-hhmma"
-        let name = "corpse-" + formatter.string(from: Date()).lowercased() + ".png"
+        let name = "sketch-" + formatter.string(from: Date()).lowercased() + ".png"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
         do {
             try data.write(to: url, options: .atomic)
@@ -348,7 +348,7 @@ struct ContentView: View {
     ContentView()
 }
 
-// the PNG handed to the share sheet, with the same title the web app shares ("Exquisite Corpse"):
+// the PNG handed to the share sheet, titled with the app name:
 // it heads the share sheet and becomes the subject line in Mail
 nonisolated final class DrawingShareItem: NSObject, UIActivityItemSource {
     let url: URL
@@ -368,12 +368,12 @@ nonisolated final class DrawingShareItem: NSObject, UIActivityItemSource {
     }
 
     func activityViewController(_ controller: UIActivityViewController, subjectForActivityType type: UIActivity.ActivityType?) -> String {
-        "Exquisite Corpse"
+        "Exquisite Sketch"
     }
 
     func activityViewControllerLinkMetadata(_ controller: UIActivityViewController) -> LPLinkMetadata? {
         let metadata = LPLinkMetadata()
-        metadata.title = "Exquisite Corpse"
+        metadata.title = "Exquisite Sketch"
         metadata.iconProvider = NSItemProvider(object: image)
         return metadata
     }
