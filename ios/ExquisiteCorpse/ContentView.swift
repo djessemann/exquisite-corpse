@@ -1,3 +1,4 @@
+import LinkPresentation
 import SwiftUI
 import UIKit
 
@@ -317,7 +318,8 @@ struct ContentView: View {
               var top = window.rootViewController else { return }
         while let presented = top.presentedViewController { top = presented }
 
-        let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        let item = DrawingShareItem(url: url, image: savedImage ?? UIImage())
+        let sheet = UIActivityViewController(activityItems: [item], applicationActivities: nil)
         // on iPad the share sheet is a popover and needs something to point at
         if let popover = sheet.popoverPresentationController {
             popover.sourceView = window
@@ -344,4 +346,35 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+// the PNG handed to the share sheet, with the same title the web app shares ("Exquisite Corpse"):
+// it heads the share sheet and becomes the subject line in Mail
+nonisolated final class DrawingShareItem: NSObject, UIActivityItemSource {
+    let url: URL
+    let image: UIImage
+
+    init(url: URL, image: UIImage) {
+        self.url = url
+        self.image = image
+    }
+
+    func activityViewControllerPlaceholderItem(_ controller: UIActivityViewController) -> Any {
+        url
+    }
+
+    func activityViewController(_ controller: UIActivityViewController, itemForActivityType type: UIActivity.ActivityType?) -> Any? {
+        url
+    }
+
+    func activityViewController(_ controller: UIActivityViewController, subjectForActivityType type: UIActivity.ActivityType?) -> String {
+        "Exquisite Corpse"
+    }
+
+    func activityViewControllerLinkMetadata(_ controller: UIActivityViewController) -> LPLinkMetadata? {
+        let metadata = LPLinkMetadata()
+        metadata.title = "Exquisite Corpse"
+        metadata.iconProvider = NSItemProvider(object: image)
+        return metadata
+    }
 }
