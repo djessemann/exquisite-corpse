@@ -301,7 +301,12 @@ struct ContentView: View {
     // so "Save Image" puts the PNG in Photos and other apps get a real .png
     private func share() {
         guard let data = savedImage?.pngData() else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("exquisite-corpse.png")
+        // e.g. corpse-april-3-2026-0434pm.png
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMMM-d-yyyy-hhmma"
+        let name = "corpse-" + formatter.string(from: Date()).lowercased() + ".png"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
         do {
             try data.write(to: url, options: .atomic)
         } catch {
