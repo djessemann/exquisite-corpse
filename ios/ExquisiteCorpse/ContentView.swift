@@ -195,13 +195,12 @@ struct ContentView: View {
 
             HStack(spacing: lg ? 14 : 10) {
                 let style = SketchButtonStyle(width: nil, height: lg ? 52 : 42, fontSize: lg ? 18 : 14)
-                if let savedImage {
-                    let image = Image(uiImage: savedImage)
-                    ShareLink(item: image, preview: SharePreview("Exquisite Corpse", image: image)) {
-                        Text("save")
+                if savedImage != nil {
+                    Button("save") {
+                        confirmHome = false
+                        share()
                     }
                     .buttonStyle(style)
-                    .simultaneousGesture(TapGesture().onEnded { confirmHome = false })
                 }
                 Button(confirmHome ? "sure?" : "home") {
                     if !confirmHome {
@@ -290,6 +289,31 @@ struct ContentView: View {
                 UIImage(cgImage: section).draw(in: CGRect(x: 0, y: y, width: canvasW * px, height: canvasH * px))
             }
         }
+    }
+
+    // write the drawing to a PNG file and open the share sheet with it,
+    // so "Save Image" puts the PNG in Photos and other apps get a real .png
+    private func share() {
+        guard let data = savedImage?.pngData() else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("exquisite-corpse.png")
+        do {
+            try data.write(to: url, options: .atomic)
+        } catch {
+            return
+        }
+        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first,
+              let window = scene.keyWindow ?? scene.windows.first,
+              var top = window.rootViewController else { return }
+        while let presented = top.presentedViewController { top = presented }
+
+        let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        // on iPad the share sheet is a popover and needs something to point at
+        if let popover = sheet.popoverPresentationController {
+            popover.sourceView = window
+            popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.maxY - 80, width: 0, height: 0)
+            popover.permittedArrowDirections = .down
+        }
+        top.present(sheet, animated: true)
     }
 
     // the composite with a white margin, for the share sheet
