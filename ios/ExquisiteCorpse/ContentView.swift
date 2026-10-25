@@ -1,4 +1,5 @@
 import LinkPresentation
+import SwiftData
 import SwiftUI
 import UIKit
 
@@ -8,7 +9,7 @@ let penGlyphs = ["penF8", "penF7", "penF3"]
 let penScale: [CGFloat] = [0.5, 0.66, 0.84]
 
 enum Screen {
-    case landing, transition, drawing, reveal
+    case landing, transition, drawing, reveal, gallery, detail, howTo
 }
 
 struct ContentView: View {
@@ -21,6 +22,11 @@ struct ContentView: View {
     @State private var confirmDone = false
     @State private var confirmHome = false
     @State private var undoFlash = 0
+    @State private var selectedDrawing: Drawing?
+    @State private var confirmDelete = false
+
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Drawing.createdAt, order: .reverse) private var drawings: [Drawing]
 
     @State private var tool = Tool.pen
     @State private var colorHex = colors[0]
@@ -37,6 +43,9 @@ struct ContentView: View {
                 case .transition: transition(lg)
                 case .drawing: drawing(lg, height: geo.size.height)
                 case .reveal: reveal(lg, height: geo.size.height)
+                case .gallery: gallery(lg)
+                case .detail: detail(lg, height: geo.size.height)
+                case .howTo: howTo(lg)
                 }
             }
         }
@@ -49,6 +58,27 @@ struct ContentView: View {
     // MARK: landing
 
     private func landing(_ lg: Bool) -> some View {
+        let s: CGFloat = lg ? 58 : 42
+        return ZStack {
+            landingTitle(lg)
+            VStack {
+                Spacer()
+                HStack {
+                    IconCircle(glyph: "gallery", circle: "circ4", size: s, lineWidth: lineWidth(lg), scale: 0.6) {
+                        screen = .gallery
+                    }
+                    Spacer()
+                    IconCircle(glyph: "info", circle: "circ9", size: s, lineWidth: lineWidth(lg), scale: 0.62) {
+                        screen = .howTo
+                    }
+                }
+                .padding(.horizontal, lg ? 32 : 22)
+                .padding(.bottom, lg ? 28 : 12)
+            }
+        }
+    }
+
+    private func landingTitle(_ lg: Bool) -> some View {
         VStack(spacing: lg ? 44 : 32) {
             Squiggle(index: 0, lineWidth: lineWidth(lg))
                 .frame(width: lg ? 300 : 200, height: lg ? 80 : 60)
@@ -227,6 +257,129 @@ struct ContentView: View {
         .padding(.horizontal, lg ? 24 : 16)
     }
 
+    // MARK: gallery
+
+    private func gallery(_ lg: Bool) -> some View {
+        VStack(spacing: 0) {
+            BackHeader(title: "gallery", lg: lg) { screen = .landing }
+            if drawings.isEmpty {
+                Spacer()
+                VStack(spacing: lg ? 34 : 26) {
+                    Text("nothing here yet.")
+                        .font(mono(lg ? 20 : 16))
+                        .foregroundStyle(Color(hex: 0x888888))
+                    Button("play", action: startNewGame)
+                        .buttonStyle(SketchButtonStyle(width: lg ? 260 : 200, height: lg ? 66 : 56, fontSize: lg ? 28 : 22))
+                }
+                Spacer()
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: lg ? 18 : 12), count: lg ? 4 : 3),
+                        spacing: lg ? 18 : 12
+                    ) {
+                        ForEach(drawings) { drawing in
+                            GalleryThumb(drawing: drawing)
+                                .onTapGesture {
+                                    selectedDrawing = drawing
+                                    confirmDelete = false
+                                    screen = .detail
+                                }
+                        }
+                    }
+                    .padding(.horizontal, lg ? 32 : 18)
+                    .padding(.top, lg ? 18 : 14)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+    }
+
+    // one drawing from the gallery: date, the drawing, save and delete
+    @ViewBuilder
+    private func detail(_ lg: Bool, height: CGFloat) -> some View {
+        if let drawing = selectedDrawing {
+            VStack(spacing: 0) {
+                BackHeader(title: drawing.dateLabel, lg: lg) {
+                    confirmDelete = false
+                    screen = .gallery
+                }
+                if let image = drawing.image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .interpolation(.high)
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(ink, lineWidth: 2))
+                        .frame(maxWidth: lg ? 440 : 300, maxHeight: max(100, height - (lg ? 240 : 200)))
+                        .padding(.top, lg ? 26 : 20)
+                }
+                HStack(spacing: lg ? 14 : 10) {
+                    let style = SketchButtonStyle(width: nil, height: lg ? 52 : 42, fontSize: lg ? 18 : 14)
+                    Button("save") {
+                        confirmDelete = false
+                        if let image = drawing.image, let framed = padded(image) {
+                            share(framed, date: drawing.createdAt)
+                        }
+                    }
+                    .buttonStyle(style)
+                    Button {
+                        if !confirmDelete {
+                            confirmDelete = true
+                        } else {
+                            confirmDelete = false
+                            selectedDrawing = nil
+                            modelContext.delete(drawing)
+                            try? modelContext.save()
+                            screen = .gallery
+                        }
+                    } label: {
+                        // always as wide as "delete" so the button doesn't change size
+                        ZStack {
+                            Text("delete").hidden()
+                            Text(confirmDelete ? "sure?" : "delete")
+                        }
+                    }
+                    .buttonStyle(style)
+                }
+                .padding(.top, lg ? 30 : 24)
+                Spacer(minLength: 16)
+            }
+        } else {
+            gallery(lg)
+        }
+    }
+
+    // MARK: how to play
+
+    private func howTo(_ lg: Bool) -> some View {
+        let steps = [
+            "3 players, one device.",
+            "first player draws a head. don’t let anyone see. draw to the bottom edge.",
+            "when done, pass the device. next player draws the body. they can see the bottom edge to connect.",
+            "repeat for the last player who draws the legs.",
+            "behold your exquisite creature! drawings save to a gallery.",
+        ]
+        return VStack(spacing: 0) {
+            BackHeader(title: "how to play", lg: lg) { screen = .landing }
+            ScrollView {
+                VStack(spacing: lg ? 26 : 20) {
+                    ForEach(steps.indices, id: \.self) { i in
+                        HowToStep(number: i + 1, text: steps[i], lg: lg)
+                    }
+                    Button("play", action: startNewGame)
+                        .buttonStyle(SketchButtonStyle(width: lg ? 260 : 200, height: lg ? 66 : 56, fontSize: lg ? 28 : 22))
+                        .padding(.top, lg ? 26 : 20)
+                }
+                .frame(maxWidth: lg ? 560 : CGFloat.infinity)
+                .padding(.horizontal, lg ? 40 : 26)
+                .padding(.top, lg ? 30 : 22)
+                .padding(.bottom, 24)
+            }
+        }
+    }
+
     // MARK: game flow
 
     private func startNewGame() {
@@ -267,8 +420,10 @@ struct ContentView: View {
             turn += 1
             screen = .transition
         } else {
-            composite = buildComposite()
-            savedImage = paddedForSaving()
+            let finished = buildComposite()
+            composite = finished
+            savedImage = padded(finished)
+            saveToGallery(finished)
             confirmHome = false
             screen = .reveal
         }
@@ -301,12 +456,16 @@ struct ContentView: View {
     // write the drawing to a PNG file and open the share sheet with it,
     // so "Save Image" puts the PNG in Photos and other apps get a real .png
     private func share() {
-        guard let data = savedImage?.pngData() else { return }
+        if let savedImage { share(savedImage, date: Date()) }
+    }
+
+    private func share(_ image: UIImage, date: Date) {
+        guard let data = image.pngData() else { return }
         // e.g. sketch-april-3-2026-0434pm.png
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "MMMM-d-yyyy-hhmma"
-        let name = "sketch-" + formatter.string(from: Date()).lowercased() + ".png"
+        let name = "sketch-" + formatter.string(from: date).lowercased() + ".png"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
         do {
             try data.write(to: url, options: .atomic)
@@ -318,7 +477,7 @@ struct ContentView: View {
               var top = window.rootViewController else { return }
         while let presented = top.presentedViewController { top = presented }
 
-        let item = DrawingShareItem(url: url, image: savedImage ?? UIImage())
+        let item = DrawingShareItem(url: url, image: image)
         let sheet = UIActivityViewController(activityItems: [item], applicationActivities: nil)
         // on iPad the share sheet is a popover and needs something to point at
         if let popover = sheet.popoverPresentationController {
@@ -329,9 +488,18 @@ struct ContentView: View {
         top.present(sheet, animated: true)
     }
 
-    // the composite with a white margin, for the share sheet
-    private func paddedForSaving() -> UIImage? {
-        guard let composite else { return nil }
+    // every finished round goes into the gallery
+    private func saveToGallery(_ image: UIImage) {
+        let drawing = Drawing(
+            imageData: image.pngData(),
+            thumbnailData: makeThumbnail(image).pngData()
+        )
+        modelContext.insert(drawing)
+        try? modelContext.save()
+    }
+
+    // the drawing with a white margin, for the share sheet
+    private func padded(_ composite: UIImage) -> UIImage? {
         let pad = 50 * CGFloat(pixelScale)
         let size = CGSize(width: composite.size.width + pad * 2, height: composite.size.height + pad * 2)
         let format = UIGraphicsImageRendererFormat()
@@ -346,6 +514,7 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .modelContainer(for: Drawing.self, inMemory: true)
 }
 
 // the PNG handed to the share sheet, titled with the app name:
