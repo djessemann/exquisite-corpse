@@ -45,30 +45,25 @@ func makeThumbnail(_ image: UIImage, width: CGFloat = 240) -> UIImage {
 
 // MARK: - pieces shared by the new screens
 
-// a glyph in a hand-drawn circle, the same size and line weight as a color swatch
-struct IconCircle: View {
+// a hand-drawn icon with no frame, sized like the fill icon in a tool button
+struct IconButton: View {
     let glyph: String
-    let circle: String
     let size: CGFloat
-    let lineWidth: CGFloat
-    var scale: CGFloat = 0.6
     let action: () -> Void
 
     var body: some View {
-        let inner = (size - 4) * scale
-        ZStack {
-            Glyph(name: circle, stretch: true, lineWidth: lineWidth)
-                .padding(2)
-            Glyph(name: glyph)
-                .frame(width: inner, height: inner)
-        }
-        .frame(width: size, height: size)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: action)
+        let px = (size * 0.79).rounded()
+        Glyph(name: glyph)
+            .frame(width: px, height: px)
+            .frame(width: size, height: size)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: action)
     }
 }
 
-// hand-drawn back chevron on the left, title centered in the same row
+// Screen header, spaced like the "draw the head" title on the game screen:
+// 24pt above the title, 22pt below it, 20pt side margins, 20pt type.
+// The back chevron sits on the left margin, on the same line as the title.
 struct BackHeader: View {
     let title: String
     let lg: Bool
@@ -77,24 +72,27 @@ struct BackHeader: View {
     var body: some View {
         ZStack {
             Text(title)
-                .font(mono(lg ? 26 : 20))
+                .font(mono(lg ? 28 : 20))
                 .foregroundStyle(ink)
                 .lineLimit(1)
+                .padding(.horizontal, lg ? 40 : 30)
             HStack {
                 Glyph(name: "back")
-                    .frame(width: lg ? 19 : 15, height: lg ? 32 : 26)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .contentShape(Rectangle())
+                    .frame(width: lg ? 17 : 14, height: lg ? 29 : 24)
+                    // a bigger tap target without moving anything
+                    .contentShape(Rectangle().inset(by: -14))
                     .onTapGesture(perform: back)
                 Spacer()
             }
         }
-        .frame(height: 44)
-        .padding(.horizontal, lg ? 18 : 6)
-        .padding(.top, lg ? 12 : 6)
+        .padding(.horizontal, screenMargin(lg))
+        .padding(.top, lg ? 26 : 24)
+        .padding(.bottom, lg ? 26 : 22)
     }
 }
+
+// side margin used by the game screen and every screen with a header
+func screenMargin(_ lg: Bool) -> CGFloat { lg ? 32 : 20 }
 
 // one drawing in the gallery grid
 struct GalleryThumb: View {

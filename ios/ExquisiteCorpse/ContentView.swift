@@ -64,13 +64,9 @@ struct ContentView: View {
             VStack {
                 Spacer()
                 HStack {
-                    IconCircle(glyph: "gallery", circle: "circ4", size: s, lineWidth: lineWidth(lg), scale: 0.6) {
-                        screen = .gallery
-                    }
+                    IconButton(glyph: "gallery", size: s) { screen = .gallery }
                     Spacer()
-                    IconCircle(glyph: "info", circle: "circ9", size: s, lineWidth: lineWidth(lg), scale: 0.62) {
-                        screen = .howTo
-                    }
+                    IconButton(glyph: "info", size: s) { screen = .howTo }
                 }
                 .padding(.horizontal, lg ? 32 : 22)
                 .padding(.bottom, lg ? 28 : 12)
@@ -288,8 +284,7 @@ struct ContentView: View {
                                 }
                         }
                     }
-                    .padding(.horizontal, lg ? 32 : 18)
-                    .padding(.top, lg ? 18 : 14)
+                    .padding(.horizontal, screenMargin(lg))
                     .padding(.bottom, 24)
                 }
             }
@@ -312,8 +307,8 @@ struct ContentView: View {
                         .scaledToFit()
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(ink, lineWidth: 2))
-                        .frame(maxWidth: lg ? 440 : 300, maxHeight: max(100, height - (lg ? 240 : 200)))
-                        .padding(.top, lg ? 26 : 20)
+                        .frame(maxWidth: lg ? 440 : 300, maxHeight: max(100, height - (lg ? 250 : 210)))
+                        .padding(.horizontal, screenMargin(lg))
                 }
                 HStack(spacing: lg ? 14 : 10) {
                     let style = SketchButtonStyle(width: nil, height: lg ? 52 : 42, fontSize: lg ? 18 : 14)
@@ -361,22 +356,26 @@ struct ContentView: View {
             "repeat for the last player who draws the legs.",
             "behold your exquisite creature! drawings save to a gallery.",
         ]
+        let content = VStack(spacing: lg ? 40 : 34) {
+            ForEach(steps.indices, id: \.self) { i in
+                HowToStep(number: i + 1, text: steps[i], lg: lg)
+            }
+            Button("play", action: startNewGame)
+                .buttonStyle(SketchButtonStyle(width: lg ? 260 : 200, height: lg ? 66 : 56, fontSize: lg ? 28 : 22))
+                .padding(.top, lg ? 30 : 26)
+        }
+        .frame(maxWidth: lg ? 560 : CGFloat.infinity)
+        .padding(.horizontal, screenMargin(lg))
+        .padding(.bottom, 24)
+
         return VStack(spacing: 0) {
             BackHeader(title: "how to play", lg: lg) { screen = .landing }
-            ScrollView {
-                VStack(spacing: lg ? 26 : 20) {
-                    ForEach(steps.indices, id: \.self) { i in
-                        HowToStep(number: i + 1, text: steps[i], lg: lg)
-                    }
-                    Button("play", action: startNewGame)
-                        .buttonStyle(SketchButtonStyle(width: lg ? 260 : 200, height: lg ? 66 : 56, fontSize: lg ? 28 : 22))
-                        .padding(.top, lg ? 26 : 20)
-                }
-                .frame(maxWidth: lg ? 560 : CGFloat.infinity)
-                .padding(.horizontal, lg ? 40 : 26)
-                .padding(.top, lg ? 30 : 22)
-                .padding(.bottom, 24)
+            // stays put when it fits; only scrolls on small screens or with large text
+            ViewThatFits(in: .vertical) {
+                content
+                ScrollView { content }
             }
+            Spacer(minLength: 0)
         }
     }
 
