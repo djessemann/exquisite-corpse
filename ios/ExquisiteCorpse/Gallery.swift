@@ -45,17 +45,19 @@ func makeThumbnail(_ image: UIImage, width: CGFloat = 240) -> UIImage {
 
 // MARK: - pieces shared by the new screens
 
-// a hand-drawn icon with no frame, sized like the fill icon in a tool button
-struct IconButton: View {
-    let glyph: String
-    let size: CGFloat
+// a small underlined word used as a link, at the app's smallest type size (13pt)
+struct TextLink: View {
+    let title: String
+    let lg: Bool
     let action: () -> Void
 
     var body: some View {
-        let px = (size * 0.79).rounded()
-        Glyph(name: glyph)
-            .frame(width: px, height: px)
-            .frame(width: size, height: size)
+        Text(title)
+            .font(mono(lg ? 16 : 13))
+            .underline()
+            .foregroundStyle(ink)
+            // a bigger tap target than the word itself
+            .padding(12)
             .contentShape(Rectangle())
             .onTapGesture(perform: action)
     }

@@ -58,18 +58,18 @@ struct ContentView: View {
     // MARK: landing
 
     private func landing(_ lg: Bool) -> some View {
-        let s: CGFloat = lg ? 58 : 42
-        return ZStack {
+        ZStack {
             landingTitle(lg)
             VStack {
                 Spacer()
                 HStack {
-                    IconButton(glyph: "gallery", size: s) { screen = .gallery }
+                    TextLink(title: "gallery", lg: lg) { screen = .gallery }
                     Spacer()
-                    IconButton(glyph: "info", size: s) { screen = .howTo }
+                    TextLink(title: "how to", lg: lg) { screen = .howTo }
                 }
-                .padding(.horizontal, lg ? 32 : 22)
-                .padding(.bottom, lg ? 28 : 12)
+                // the links carry 12pt of invisible tap padding, so the words sit 24pt from the edges
+                .padding(.horizontal, lg ? 20 : 12)
+                .padding(.bottom, lg ? 20 : 12)
             }
         }
     }
