@@ -1,9 +1,12 @@
-var CACHE_NAME = 'corpse-v23';
+var CACHE_NAME = 'corpse-v24';
 var LOCAL_URLS = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png',
   './vendor/react.production.min.js',
   './vendor/react-dom.production.min.js',
   './fonts/space-mono.css',

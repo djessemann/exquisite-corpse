@@ -1,10 +1,13 @@
 var CACHE_PREFIX = 'corpse-v2app-';
-var CACHE_NAME = CACHE_PREFIX + '7';
+var CACHE_NAME = CACHE_PREFIX + '8';
 var LOCAL_URLS = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png',
   '../vendor/react.production.min.js',
   '../vendor/react-dom.production.min.js',
   '../fonts/space-mono.css',
