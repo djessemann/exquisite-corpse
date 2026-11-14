@@ -373,22 +373,18 @@ struct ContentView: View {
 
         return VStack(spacing: 0) {
             BackHeader(title: "how to play", lg: lg) { screen = .landing }
-            // fits on one screen on most phones; scrolls only on small screens or with large text
+            // starts right under the header; scrolls only on small screens or with large text
+            let stack = VStack(spacing: lg ? 52 : 44) {
+                block
+                play
+            }
+            .padding(.bottom, 24)
             ViewThatFits(in: .vertical) {
                 VStack(spacing: 0) {
+                    stack
                     Spacer(minLength: 0)
-                    block
-                    Spacer(minLength: lg ? 52 : 44)
-                    play
                 }
-                .padding(.bottom, lg ? 28 : 16)
-                ScrollView {
-                    VStack(spacing: lg ? 52 : 44) {
-                        block
-                        play
-                    }
-                    .padding(.bottom, 24)
-                }
+                ScrollView { stack }
             }
         }
     }

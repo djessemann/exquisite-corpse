@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="theme-color" content="#ffffff" />
@@ -500,18 +500,18 @@ var lw = lg ? 3 : 2.5;
 
 // LANDING
 if (screen === "landing") {
-return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: lg ? 44 : 32 }) },
+return h("div", { style: Object.assign({}, wrap, { minHeight: "100vh", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: lg ? 44 : 32 }) },
 h(Squig, { w: lg ? 300 : 200, h: lg ? 80 : 60, lw: lw, i: 0 }),
 h(Title, { size: lg ? 68 : 48 }, "exquisite", h("br"), "sketch"),
 h(Squig, { w: lg ? 300 : 200, h: lg ? 80 : 60, lw: lw, i: 1 }),
 h(SketchBtn, { w: lg ? 260 : 200, h: lg ? 66 : 56, fontSize: lg ? 28 : 22, onClick: startNewGame }, "play"),
-h("div", { style: { position: "fixed", left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "space-between", padding: lg ? "0 20px 20px" : "0 12px 12px" } },
+h("div", { style: { position: "fixed", left: 0, right: 0, bottom: 0, display: "flex", justifyContent: "space-between", padding: lg ? "0 20px calc(env(safe-area-inset-bottom) + 20px)" : "0 12px calc(env(safe-area-inset-bottom) + 12px)" } },
 h(TextLink, { lg: lg, onClick: function () { setScreen("gallery"); } }, "gallery"),
 h(TextLink, { lg: lg, onClick: function () { setScreen("howto"); } }, "how to"))
 );
 }
 
-var screenCol = { width: "100%", height: "100vh", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden" };
+var screenCol = { width: "100%", height: "100vh", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", boxSizing: "border-box", background: "#fff", display: "flex", flexDirection: "column", overflow: "hidden" };
 var scroller = { flex: 1, overflowY: "auto", touchAction: "pan-y", WebkitOverflowScrolling: "touch" };
 var margin = lg ? 32 : 20;
 
@@ -550,7 +550,7 @@ h("span", { style: { gridArea: "1 / 1", visibility: "hidden" } }, "delete"),
 h("span", { style: { gridArea: "1 / 1", textAlign: "center" } }, confirmDelete ? "sure?" : "delete")))));
 }
 
-// HOW TO PLAY: fits on one screen on most phones, scrolls when it doesn't
+// HOW TO PLAY: starts under the header; scrolls only when it doesn't fit
 if (screen === "howto") {
 var steps = [
 "player 1 draws a head. don’t show the others. draw to the bottom, then pass the device.",
@@ -561,12 +561,11 @@ var steps = [
 return h("div", { style: screenCol },
 h(BackHeader, { title: "how to play", lg: lg, onBack: function () { setScreen("landing"); } }),
 h("div", { style: scroller },
-h("div", { style: { minHeight: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "0 " + margin + "px " + (lg ? 28 : 16) + "px" } },
-h("div", { style: { flex: 1, minHeight: 0 } }),
+h("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", padding: "0 " + margin + "px " + (lg ? 28 : 24) + "px" } },
 h("div", { style: { width: "100%", maxWidth: lg ? 560 : "none", display: "flex", flexDirection: "column", gap: lg ? 30 : 26 } },
 h("div", { style: { fontFamily: FONT, fontSize: lg ? 17 : 13, lineHeight: 1.55, color: INK, marginBottom: lg ? 12 : 10 } }, "exquisite sketch is a 3 player drawing game on one device."),
 steps.map(function (t, i) { return h(HowToStep, { key: i, n: i + 1, text: t, src: "howto-" + (i + 1) + ".png", tall: i === 3, lg: lg }); })),
-h("div", { style: { flex: 1, minHeight: lg ? 52 : 44 } }),
+h("div", { style: { height: lg ? 52 : 44, flexShrink: 0 } }),
 h(SketchBtn, { w: lg ? 260 : 200, h: lg ? 66 : 56, fontSize: lg ? 28 : 22, onClick: startNewGame }, "play"))));
 }
 
