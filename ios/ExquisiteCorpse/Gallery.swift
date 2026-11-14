@@ -116,26 +116,37 @@ struct GalleryThumb: View {
     }
 }
 
-// a numbered step on the how to play screen
+// a step on the how to play screen: a small picture, then the number and words beside it
 struct HowToStep: View {
     let number: Int
     let text: String
+    let image: String
+    let tall: Bool
     let lg: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: lg ? 18 : 14) {
-            Text("\(number)")
-                .font(mono(lg ? 16 : 13))
-                .foregroundStyle(ink)
-                .frame(width: lg ? 34 : 28, height: lg ? 34 : 28)
-                .overlay(Circle().stroke(ink, lineWidth: 2))
-            Text(text)
-                .font(mono(lg ? 18 : 14))
-                .foregroundStyle(ink)
-                .lineSpacing(lg ? 5 : 4)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, lg ? 5 : 3)
+        let column: CGFloat = lg ? 170 : 115
+        HStack(spacing: lg ? 22 : 16) {
+            Image(uiImage: UIImage(named: image) ?? UIImage())
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: tall ? column * 0.48 : column)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(ink, lineWidth: 1.5))
+                .frame(width: column)
+            // hanging number: wrapped lines line up with the words, not the number
+            HStack(alignment: .firstTextBaseline, spacing: lg ? 10 : 8) {
+                Text("\(number).")
+                    .frame(width: lg ? 24 : 18, alignment: .leading)
+                Text(text)
+                    .lineSpacing(lg ? 4 : 3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .font(mono(lg ? 17 : 13))
+            .foregroundStyle(ink)
             Spacer(minLength: 0)
         }
+        .frame(minHeight: lg ? 118 : 80)
     }
 }

@@ -350,32 +350,46 @@ struct ContentView: View {
 
     private func howTo(_ lg: Bool) -> some View {
         let steps = [
-            "3 players, one device.",
-            "first player draws a head. don’t let anyone see. draw to the bottom edge.",
-            "when done, pass the device. next player draws the body. they can see the bottom edge to connect.",
-            "repeat for the last player who draws the legs.",
-            "behold your exquisite creature! drawings save to a gallery.",
+            "player 1 draws a head. don’t show the others. draw to the bottom, then pass the device.",
+            "player 2 sees a piece of player 1’s drawing and draws the body. pass the device again.",
+            "player 3 does the same with the legs.",
+            "behold your exquisite creature. it saves to the gallery.",
         ]
-        let content = VStack(spacing: lg ? 40 : 34) {
+        let block = VStack(alignment: .leading, spacing: lg ? 30 : 26) {
+            Text("exquisite sketch is a 3 player drawing game on one device.")
+                .font(mono(lg ? 17 : 13))
+                .foregroundStyle(ink)
+                .lineSpacing(lg ? 4 : 3)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, lg ? 12 : 10)
             ForEach(steps.indices, id: \.self) { i in
-                HowToStep(number: i + 1, text: steps[i], lg: lg)
+                HowToStep(number: i + 1, text: steps[i], image: "howto-\(i + 1)", tall: i == 3, lg: lg)
             }
-            Button("play", action: startNewGame)
-                .buttonStyle(SketchButtonStyle(width: lg ? 260 : 200, height: lg ? 66 : 56, fontSize: lg ? 28 : 22))
-                .padding(.top, lg ? 30 : 26)
         }
         .frame(maxWidth: lg ? 560 : CGFloat.infinity)
         .padding(.horizontal, screenMargin(lg))
-        .padding(.bottom, 24)
+        let play = Button("play", action: startNewGame)
+            .buttonStyle(SketchButtonStyle(width: lg ? 260 : 200, height: lg ? 66 : 56, fontSize: lg ? 28 : 22))
 
         return VStack(spacing: 0) {
             BackHeader(title: "how to play", lg: lg) { screen = .landing }
-            // stays put when it fits; only scrolls on small screens or with large text
+            // fits on one screen on most phones; scrolls only on small screens or with large text
             ViewThatFits(in: .vertical) {
-                content
-                ScrollView { content }
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    block
+                    Spacer(minLength: lg ? 52 : 44)
+                    play
+                }
+                .padding(.bottom, lg ? 28 : 16)
+                ScrollView {
+                    VStack(spacing: lg ? 52 : 44) {
+                        block
+                        play
+                    }
+                    .padding(.bottom, 24)
+                }
             }
-            Spacer(minLength: 0)
         }
     }
 
