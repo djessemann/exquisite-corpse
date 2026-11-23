@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>exquisite sketch</title>
+<meta name="description" content="a 3 player drawing game on one device." />
+<meta name="theme-color" content="#ffffff" />
+
+<!-- link previews (iMessage, Slack, social). og-image.png is 1200x630. -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="exquisite sketch" />
+<meta property="og:description" content="a 3 player drawing game on one device." />
+<meta property="og:image" content="og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<!-- Safari "open in app" banner. Uncomment and add the real app id once the app is live. -->
+<!-- <meta name="apple-itunes-app" content="app-id=0000000000" /> -->
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="fonts/space-mono.css" />
+
+<style>
+:root {
+  --ink: #1a1a1a;
+  --paper: #ffffff;
+  --muted: #6b6b6b;
+  --card-w: 200px;
+  --gap: 28px;
+  --speed: 70s; /* time for one full loop; bigger = slower */
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body {
+  font-family: 'Space Mono', ui-monospace, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+main { width: 100%; }
+
+/* ---- top ---- */
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 16px 40px;
+}
+.logo { width: 160px; height: auto; margin-bottom: 36px; }
+.logo path {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: draw 1.6s ease-out 0.2s forwards;
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+h1 {
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+.tagline {
+  margin-top: 18px;
+  font-size: 17px;
+  color: var(--muted);
+}
+
+/* ---- gallery ---- */
+.gallery {
+  width: 100%;
+  overflow: hidden;
+  padding: 16px 0 24px;
+  /* soft fade at the edges */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.track {
+  display: flex;
+  width: max-content;
+  animation: scroll var(--speed) linear infinite;
+}
+.gallery:hover .track { animation-play-state: paused; }
+@keyframes scroll { to { transform: translateX(-50%); } }
+.track figure {
+  flex: none;
+  width: var(--card-w);
+  margin-right: var(--gap);
+}
+.track img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 600 / 1210; /* size of a finished drawing in the app */
+  object-fit: cover;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+}
+/* small tilt so it feels like a pile of paper */
+.track figure:nth-child(3n+1) { transform: rotate(-1.2deg); }
+.track figure:nth-child(3n+2) { transform: rotate(0.8deg) translateY(10px); }
+.track figure:nth-child(3n)   { transform: rotate(-0.4deg) translateY(-6px); }
+
+/* ---- download ---- */
+.download {
+  padding: 32px 16px 56px;
+  display: flex;
+  justify-content: center;
+}
+.download a { display: inline-block; line-height: 0; border-radius: 8px; }
+.download a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.download img { height: 54px; width: auto; }
+
+footer {
+  margin-top: auto;
+  padding: 0 16px 28px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  :root { --card-w: 150px; --gap: 20px; }
+  header { padding: 48px 16px 28px; }
+  .logo { width: 124px; margin-bottom: 28px; }
+  h1 { font-size: 40px; }
+  .tagline { font-size: 14px; }
+}
+
+/* people who ask for less motion: no auto scroll, swipe instead */
+@media (prefers-reduced-motion: reduce) {
+  .logo path { animation: none; stroke-dashoffset: 0; }
+  .track { animation: none; }
+  .gallery { overflow-x: auto; }
+  .track figure[aria-hidden="true"] { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="logo" viewBox="40 94 434 203" fill="none" aria-hidden="true"><path d="M 50,256 C 100,60 150,450 230,180 C 310,-90 330,470 410,210 C 450,80 470,380 462,256" stroke="#1a1a1a" stroke-width="16" stroke-linecap="round"/></svg>
+  <h1>exquisite<br />sketch</h1>
+  <p class="tagline">a 3 player drawing game on one device</p>
+</header>
+
+<main>
+  <section class="gallery" aria-label="drawings made in the game">
+    <!-- To use real drawings: put the PNGs in drawings/ and change the src paths below.
+         Add or remove <figure> lines as you like. The loop copies them automatically. -->
+    <div class="track" id="track">
+      <figure><img src="drawings/example-1.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-2.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-3.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-4.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-5.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-6.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-7.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+      <figure><img src="drawings/example-8.svg" alt="a drawing made in exquisite sketch" loading="lazy" /></figure>
+    </div>
+  </section>
+
+  <section class="download">
+    <!-- Replace # with the App Store link once the app is live. -->
+    <a href="#" id="app-store-link" aria-label="Download exquisite sketch on the App Store">
+      <img src="app-store-badge.svg" alt="Download on the App Store" width="162" height="54" />
+    </a>
+  </section>
+</main>
+
+<footer>&copy; <span id="year">2026</span> exquisite sketch</footer>
+
+<script>
+// Make the gallery loop seamlessly: copy the set once so it can slide by half its width.
+// Also keep it wide enough to fill very wide screens.
+(function () {
+  var track = document.getElementById("track");
+  var originals = Array.prototype.slice.call(track.children);
+  function copySet() {
+    originals.forEach(function (fig) {
+      var c = fig.cloneNode(true);
+      c.setAttribute("aria-hidden", "true");
+      c.querySelector("img").alt = "";
+      track.appendChild(c);
+    });
+  }
+  // one set must be at least as wide as the screen, or a gap shows
+  var cardW = originals[0].getBoundingClientRect().width + 28;
+  var sets = Math.max(1, Math.ceil(window.innerWidth / (cardW * originals.length)));
+  for (var i = 1; i < sets; i++) copySet();   // grow the base set
+  originals = Array.prototype.slice.call(track.children);
+  copySet();                                   // then double it for the loop
+  document.getElementById("year").textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
