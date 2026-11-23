@@ -1,0 +1,34 @@
+/* shared styles for the text pages (privacy, support) */
+:root { --ink: #1a1a1a; --paper: #ffffff; --muted: #6b6b6b; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body {
+  font-family: 'Space Mono', ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.65;
+  padding: 40px 16px 56px;
+}
+.wrap { max-width: 640px; margin: 0 auto; }
+.home {
+  display: inline-flex; align-items: center; gap: 12px;
+  color: var(--ink); text-decoration: none; margin-bottom: 40px;
+}
+.home svg { width: 56px; height: auto; }
+.home span { font-size: 15px; }
+h1 { font-weight: 400; font-size: 36px; line-height: 1.1; margin-bottom: 8px; }
+.updated { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+h2 { font-weight: 700; font-size: 15px; margin: 32px 0 8px; }
+p, li { margin-bottom: 12px; }
+ul, ol { padding-left: 22px; }
+a { color: var(--ink); }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+footer {
+  max-width: 640px; margin: 56px auto 0; padding-top: 20px;
+  border-top: 1px solid #e5e5e5; color: var(--muted); font-size: 12px; line-height: 1.6;
+}
+footer a { color: var(--muted); }
+@media (max-width: 600px) {
+  body { font-size: 14px; padding-top: 28px; }
+  h1 { font-size: 30px; }
+}

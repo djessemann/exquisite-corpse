@@ -10,6 +10,9 @@ One static page. No build step. Upload this whole folder to any static host
 - `drawings/`: gallery images (the `example-*.svg` files are placeholders)
 - `app-store-badge.svg`: placeholder App Store badge
 - `og-image.png`: 1200x630 preview image for links shared in iMessage, Slack, etc.
+- `privacy/`: privacy policy (placeholder). Use its URL as the Privacy Policy URL in App Store Connect.
+- `support/`: support page (placeholder). Use its URL as the Support URL in App Store Connect.
+- `page.css`: shared styles for the privacy and support pages
 - `favicon.svg`, `apple-touch-icon.png`, `fonts/`
 
 ## Before launch
@@ -27,6 +30,11 @@ One static page. No build step. Upload this whole folder to any static host
 5. **Link previews**: once the site has a real address, change `og:image` to the
    full URL (for example `https://example.com/og-image.png`). Some apps ignore
    relative paths. Regenerate `og-image.png` with the real drawings if you like.
+
+6. **Privacy and support pages**: check every line still matches the app. They say
+   the app collects nothing, has no accounts, ads or analytics, keeps drawings on
+   the device, and asks before saving to Photos. If any of that changes, update
+   `privacy/index.html` and its date. Swap the placeholder email if needed.
 
 ## Tweaks
 

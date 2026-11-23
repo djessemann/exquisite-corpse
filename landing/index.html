@@ -27,7 +27,7 @@
   --paper: #ffffff;
   --muted: #6b6b6b;
   /* card width follows screen height so everything fits on one screen */
-  --card-w: clamp(110px, calc((100svh - 480px) / 2.05), 200px);
+  --card-w: clamp(80px, calc((100svh - 540px) / 2.05), 190px);
   --gap: 28px;
   --speed: 70s; /* time for one full loop; bigger = slower */
 }
@@ -119,14 +119,28 @@ h1 {
 .download a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 .download img { height: 54px; width: auto; }
 
+/* ---- footer ---- */
+footer {
+  padding: 0 16px 20px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+footer a { color: var(--muted); }
+footer a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+footer nav { margin-bottom: 2px; font-size: 12px; }
+
 @media (max-width: 600px) {
-  :root { --card-w: clamp(84px, calc((100svh - 372px) / 2.05), 130px); --gap: 18px; }
+  :root { --card-w: clamp(72px, calc((100svh - 380px) / 2.05), 130px); --gap: 18px; }
   header { padding: 28px 16px 20px; }
   .logo { width: 104px; margin-bottom: 18px; }
   h1 { font-size: 36px; }
   .tagline { margin-top: 12px; font-size: 13px; }
   .download img { height: 48px; }
-  .gallery { padding: 16px 0 20px; }
+  .gallery { padding: 16px 0 16px; }
+  footer { font-size: 9px; padding-bottom: 14px; }
+  footer nav { font-size: 11px; }
 }
 @media (max-width: 360px) {
   .tagline { font-size: 11.5px; }
@@ -173,6 +187,11 @@ h1 {
   </section>
 
 </main>
+
+<footer>
+  <nav><a href="privacy/">privacy</a> · <a href="support/">support</a></nav>
+  Apple, the Apple logo, and App Store are trademarks of Apple Inc.
+</footer>
 
 <script>
 // Make the gallery loop seamlessly: copy the set once so it can slide by half its width.
